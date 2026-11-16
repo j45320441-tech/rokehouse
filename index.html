@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로케 홈페이지</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&amp;family=Gowun+Dodum&amp;display=swap">
+<style>
+[hidden]{display:none !important}
+body{margin:0;background:#1b1d2e}
+a{color:inherit}a:hover{color:inherit}
+@keyframes fadeIn{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:none}}
+@keyframes starPulse{0%,100%{transform:rotate(0deg) scale(1)}50%{transform:rotate(8deg) scale(1.06)}}
+@keyframes snow{from{background-position:0 0,0 0}to{background-position:40px 720px,-60px 720px}}
+.scr{animation:fadeIn .55s ease both}
+.star{transition:transform .25s ease, filter .25s ease}
+.star:hover{transform:rotate(20deg) scale(1.08);filter:brightness(1.15)}
+.star-big{animation:starPulse 3.2s ease-in-out infinite}
+.sq{transition:background .2s ease, transform .2s ease}
+.sq:hover{background:rgba(255,255,255,.28);transform:translateY(-2px)}
+.arrow{transition:transform .2s ease}
+.arrow:hover{transform:translateX(6px)}
+.arrow-l:hover{transform:translateX(-6px)}
+.snowlayer{background-image:radial-gradient(2px 2px at 20px 30px,rgba(255,255,255,.8),transparent),radial-gradient(1.5px 1.5px at 90px 120px,rgba(255,255,255,.6),transparent);background-size:140px 160px,200px 220px;animation:snow 14s linear infinite}
+@keyframes stroll{0%{left:-4px}47%{left:calc(100% - 106px)}50%{left:calc(100% - 106px)}97%{left:-4px}100%{left:-4px}}
+@keyframes face{0%,47%{transform:scaleX(-1)}50%,97%{transform:scaleX(1)}100%{transform:scaleX(-1)}}
+@keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.85)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+.walker-face{animation:face 28s linear infinite}
+.bubble{animation:pop .2s ease-out both}
+.walker-btn{cursor:pointer}
+.walker-btn:active .walker-bob{filter:brightness(1.1) drop-shadow(0 4px 4px rgba(0,0,0,.35))}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+.walker{animation:stroll 28s linear infinite}
+.walker-bob{animation:bob .45s ease-in-out infinite;transform-origin:50% 100%}
+@media (prefers-reduced-motion:reduce){.walker,.walker-face,.walker-bob,.star-big,.snowlayer{animation:none}}
+button:focus-visible,a:focus-visible{outline:3px solid #ffd27a;outline-offset:4px}
+@keyframes stroll-m{0%{left:-4px}47%{left:calc(100% - 78px)}50%{left:calc(100% - 78px)}97%{left:-4px}100%{left:-4px}}
+@media (max-width:760px){
+.title-xl{font-size:44px !important}
+.scr ul{font-size:15px !important;gap:3px !important}
+.m-intro-img{top:12px !important;left:12px !important;width:calc(100% - 24px) !important;height:calc(100% - 24px) !important;border-radius:10px !important}
+.m-intro-text{left:28px !important;bottom:150px !important}
+.m-intro-title{font-size:48px !important}
+.star-big{width:112px !important;height:112px !important;right:28px !important;top:56px !important}
+.m-star-tr{width:60px !important;height:60px !important;right:20px !important;top:24px !important}
+.m-roke-text{left:24px !important;top:28px !important;max-width:calc(100% - 110px) !important;gap:10px !important}
+.m-roke-img{width:80% !important;height:42% !important;top:47% !important}
+.m-sq-l,.m-sq-r{min-width:0 !important;height:56px !important;padding:0 16px !important;bottom:148px !important}
+.m-sq-l{left:20px !important;font-size:30px !important}
+.m-sq-r{right:20px !important;font-size:28px !important}
+.m-works-bg{width:100% !important;opacity:.28}
+.m-works-title{right:auto !important;left:24px !important;top:28px !important;font-size:42px !important}
+.m-works-list{left:20px !important;right:20px !important;top:110px !important;bottom:150px !important;gap:28px !important}
+.split{gap:16px !important}
+.m-cover{width:92px !important;height:126px !important}
+.m-work-text{font-size:22px !important}
+.split a.star{width:56px !important;height:56px !important}
+.m-p-img{width:84% !important;height:44% !important;top:40% !important}
+.m-p-logo{right:auto !important;left:24px !important;top:24px !important;font-size:34px !important}
+.m-p-star{right:20px !important;top:24px !important;width:60px !important;height:60px !important}
+.m-p-text{left:24px !important;bottom:150px !important}
+.m-arrow{width:80px !important;height:80px !important;bottom:120px !important}
+.m-arrow.arrow-l{left:20px !important}
+.m-arrow:not(.arrow-l){right:20px !important}
+.m-n-img{right:8% !important;width:84% !important;height:44% !important;top:54% !important}
+.m-n-logo{left:24px !important;top:24px !important;font-size:34px !important}
+.m-n-text{left:24px !important;top:84px !important}
+.m-n-star{right:20px !important;bottom:130px !important;width:56px !important;height:56px !important}
+.walker{width:80px !important;height:93px !important;animation-name:stroll-m !important}
+.walker-btn,.walker-face,.walker-bob{width:80px !important;height:93px !important}
+.bubble{bottom:100px !important;font-size:20px !important;padding:6px 11px !important}
+}
+</style>
+
+</head>
+<body>
+
+<div style="position: relative; width: 100%; height: 100vh; min-height: 620px; overflow: hidden; font-family: 'Gowun Dodum', sans-serif; color: #f4f3f7; background: #1b1d2e">
+
+<!-- 0. 인트로 -->
+<section class="scr" data-screen="0" style="position: absolute; inset: 0; background: #262a44">
+<img class="m-intro-img" src="img/intro.jpg" alt="눈 내린 폐허 속, 뒤돌아 선 소녀" style="position: absolute; top: 24px; left: 24px; width: calc(100% - 48px); height: calc(100% - 48px); object-fit: cover; object-position: center; border-radius: 12px; display: block">
+<div class="m-intro-img" aria-hidden="true" style="position: absolute; top: 24px; left: 24px; width: calc(100% - 48px); height: calc(100% - 48px); border-radius: 12px; background: linear-gradient(to top, rgba(20,22,38,.55), rgba(20,22,38,0) 40%)"></div>
+<div class="snowlayer" aria-hidden="true" style="position: absolute; inset: 0; opacity: .7"></div>
+<div class="m-intro-text" style="position: absolute; left: 56px; bottom: 56px; display: flex; flex-direction: column; gap: 6px">
+<p class="m-intro-title" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-size: 64px; line-height: 1; color: #f4f3f7">Roke</p>
+<p style="margin: 0; font-size: 15px; color: #c9cce0">빨간 별을 눌러 들어가기</p>
+</div>
+<button class="star star-big" data-go="1" aria-label="로케 소개로 들어가기" style="position: absolute; right: 9%; top: 10%; width: 170px; height: 170px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="rgba(206,40,48,.82)" stroke="#e0454c" stroke-width="2"></path></svg>
+</button>
+</section>
+
+<!-- 1. 로케 소개 -->
+<section class="scr" data-screen="1" hidden style="position: absolute; inset: 0; background: #ecebe8; color: #2a2a2e">
+<img class="char-ph m-roke-img" src="img/roke.jpg" alt="로케 · 고글과 기계팔" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 46%; height: 78%; object-fit: cover; object-position: center top; border-radius: 12px; display: block">
+<div class="m-roke-text" style="position: absolute; left: 56px; top: 48px; display: flex; flex-direction: column; gap: 14px; max-width: 360px">
+<h1 class="title-xl" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-weight: 400; font-size: 76px; line-height: 1; color: #2a2a2e">로케(괄호)/Roke</h1>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 18px; color: #3b3a3f">
+<li>까망별 활동</li>
+<li>농농단</li>
+<li>판타지, 세이프티, 농 작가</li>
+</ul>
+</div>
+<button class="star m-star-tr" data-go="0" aria-label="처음으로" style="position: absolute; right: 64px; top: 40px; width: 96px; height: 96px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="rgba(206,40,48,.82)" stroke="#e0454c" stroke-width="2"></path></svg>
+</button>
+<button class="sq m-sq-l" data-go="3" style="position: absolute; left: 56px; bottom: 56px; min-width: 180px; height: 92px; padding: 0 24px; border: 2px solid #8c8a86; border-radius: 4px; background: rgba(255,255,255,.4); cursor: pointer; font-family: 'Nanum Pen Script', cursive; font-size: 48px; color: #2a2a2e">x+-o</button>
+<button class="sq m-sq-r" data-go="2" style="position: absolute; right: 56px; bottom: 56px; min-width: 180px; height: 92px; padding: 0 24px; border: 2px solid #8c8a86; border-radius: 4px; background: rgba(255,255,255,.4); cursor: pointer; font-family: 'Nanum Pen Script', cursive; font-size: 44px; color: #2a2a2e">농농시리즈</button>
+</section>
+
+<!-- 2. 농농시리즈 -->
+<section class="scr" data-screen="2" hidden style="position: absolute; inset: 0; background: #646c78; color: #ffffff">
+<img class="m-works-bg" src="img/series.jpg" alt="폐허 골목의 소녀" style="position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 34%; height: 100%; object-fit: cover; object-position: center; display: block">
+<h2 class="m-works-title" style="position: absolute; right: 200px; top: 48px; margin: 0; font-family: 'Nanum Pen Script', cursive; font-weight: 400; font-size: 64px; color: #ffffff">농농시리즈</h2>
+<button class="star m-star-tr" data-go="1" aria-label="로케 소개로 돌아가기" style="position: absolute; right: 64px; top: 40px; width: 96px; height: 96px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="rgba(206,40,48,.82)" stroke="#e0454c" stroke-width="2"></path></svg>
+</button>
+<div class="m-works-list" style="position: absolute; left: 48px; top: 48px; bottom: 48px; display: flex; flex-direction: column; justify-content: center; gap: 48px">
+<div class="split" style="display: flex; align-items: center; gap: 28px">
+<img src="img/teacher.jpg" alt="선생님 표지" class="m-cover" style="width: 128px; height: 176px; flex-shrink: 0; object-fit: cover; object-position: right center; border-radius: 6px; display: block; box-shadow: 0 6px 18px rgba(0,0,0,.3)">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<p class="m-work-text" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-size: 34px; color: #ffffff">20세 농농 제자와 재회하기</p>
+<a class="star" href="https://zeta-ai.io/ko/plots/0190e284-b4b9-409f-b2df-e65b8105a1e4/profile" target="_blank" rel="noopener" aria-label="선생님 보러가기" style="display: block; width: 96px; height: 96px">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="#8e8fb2" stroke="#ffffff" stroke-width="2"></path></svg>
+</a>
+</div>
+</div>
+<div class="split" style="display: flex; align-items: center; gap: 28px">
+<img src="img/love.jpg" alt="너무너무 사랑해 표지" class="m-cover" style="width: 128px; height: 176px; flex-shrink: 0; object-fit: cover; object-position: left center; border-radius: 6px; display: block; box-shadow: 0 6px 18px rgba(0,0,0,.3)">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<p class="m-work-text" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-size: 34px; color: #ffffff">조금 슬픈 옛날이야기 보러가기</p>
+<a class="star" href="https://zeta-ai.io/ko/plots/789212dd-3ba5-447d-b200-cab9c1afe3a1/profile" target="_blank" rel="noopener" aria-label="너무너무 사랑해 보러가기" style="display: block; width: 96px; height: 96px">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="#8e8fb2" stroke="#ffffff" stroke-width="2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</section>
+
+<!-- 3. 양성자 -->
+<section class="scr" data-screen="3" hidden style="position: absolute; inset: 0; background: #4d5859; color: #ffffff">
+<img class="char-ph m-p-img" src="img/proton.jpg" alt="양성자 · 연구실 의자" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 42%; height: 82%; object-fit: cover; object-position: 45% center; border-radius: 12px; display: block">
+<p class="m-p-logo" style="position: absolute; right: 64px; top: 40px; margin: 0; font-family: 'Nanum Pen Script', cursive; font-size: 48px; color: #e6ecec">x+-o</p>
+<button class="star m-p-star" data-go="1" aria-label="로케 소개로 돌아가기" style="position: absolute; right: 72px; top: 120px; width: 88px; height: 88px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="rgba(206,40,48,.82)" stroke="#e0454c" stroke-width="2"></path></svg>
+</button>
+<div class="m-p-text" style="position: absolute; left: 56px; bottom: 96px; display: flex; flex-direction: column; gap: 12px; max-width: 360px">
+<h2 class="title-xl" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-weight: 400; font-size: 80px; line-height: 1; color: #ffffff">양성자</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 18px; color: #f1f4f4">
+<li>팔로워 애칭 및 대표</li>
+<li>연구원</li>
+</ul>
+</div>
+<button class="arrow m-arrow" data-go="4" aria-label="다음: 중성자" style="position: absolute; right: 48px; bottom: 56px; width: 150px; height: 150px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 34 H52 V8 L94 50 L52 92 V66 H8 Z" fill="none" stroke="#e0454c" stroke-width="3" stroke-linejoin="round"></path></svg>
+</button>
+</section>
+
+<!-- 4. 중성자 -->
+<section class="scr" data-screen="4" hidden style="position: absolute; inset: 0; background: #1d1d21; color: #ffffff">
+<img class="char-ph m-n-img" src="img/neutron.jpg" alt="중성자 · 보랏빛 헤일로" style="position: absolute; right: 6%; top: 50%; transform: translateY(-50%); width: 44%; height: 86%; object-fit: cover; object-position: 45% center; border-radius: 12px; display: block">
+<p class="m-n-logo" style="position: absolute; left: 64px; top: 40px; margin: 0; font-family: 'Nanum Pen Script', cursive; font-size: 48px; color: #d4d3dc">x+-o</p>
+<div class="m-n-text" style="position: absolute; left: 22%; top: 30%; display: flex; flex-direction: column; gap: 12px; max-width: 320px">
+<h2 class="title-xl" style="margin: 0; font-family: 'Nanum Pen Script', cursive; font-weight: 400; font-size: 80px; line-height: 1; color: #ffffff">중성자</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 18px; color: #ecebf2">
+<li>前 포도당</li>
+<li>주황별용</li>
+</ul>
+</div>
+<button class="arrow arrow-l m-arrow" data-go="3" aria-label="이전: 양성자" style="position: absolute; left: 48px; bottom: 56px; width: 150px; height: 150px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M92 34 H48 V8 L6 50 L48 92 V66 H92 Z" fill="none" stroke="#e0454c" stroke-width="3" stroke-linejoin="round"></path></svg>
+</button>
+<button class="star m-n-star" data-go="1" aria-label="로케 소개로 돌아가기" style="position: absolute; right: 48px; bottom: 56px; width: 72px; height: 72px; padding: 0; border: 0; background: transparent; cursor: pointer">
+<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M8 14 Q52 30 92 8 Q72 50 88 92 Q48 70 10 88 Q30 50 8 14 Z" fill="rgba(206,40,48,.82)" stroke="#e0454c" stroke-width="2"></path></svg>
+</button>
+</section>
+
+<!-- 걸어다니는 미니 로케 -->
+<div class="walker" style="position: absolute; bottom: 6px; left: 0; width: 110px; height: 128px; z-index: 5">
+<div class="bubble" id="bubble" hidden role="status" style="position: absolute; left: 50%; bottom: 136px; transform: translateX(-50%); padding: 8px 14px; background: #ffffff; color: #2a2a2e; border-radius: 14px; white-space: nowrap; font-family: 'Nanum Pen Script', cursive; font-size: 26px; line-height: 1.1; box-shadow: 0 4px 12px rgba(0,0,0,.25)"><span id="bubble-text"></span><span aria-hidden="true" style="position: absolute; left: 50%; bottom: -7px; margin-left: -7px; width: 14px; height: 14px; background: #ffffff; transform: rotate(45deg)"></span></div>
+<button class="walker-btn" id="walker-btn" aria-label="미니 로케 쿡 찌르기" style="display: block; width: 110px; height: 128px; padding: 0; border: 0; background: transparent">
+<div class="walker-face" style="width: 110px; height: 128px">
+<img class="walker-bob" id="walker-img" src="img/chibi.png" alt="" style="width: 110px; height: 128px; object-fit: contain; object-position: center bottom; display: block; filter: drop-shadow(0 4px 4px rgba(0,0,0,.35))">
+</div>
+</button>
+</div>
+</div>
+<script>
+(function(){
+  var screens=document.querySelectorAll('[data-screen]');
+  function go(n){screens.forEach(function(s){s.hidden=String(n)!==s.getAttribute('data-screen');});}
+  document.querySelectorAll('[data-go]').forEach(function(b){b.addEventListener('click',function(){go(b.getAttribute('data-go'));});});
+  var lines=[['후에엥 아프자나여..',3],['지인도 없는데 때리지마세여...',3],['맴매형할게요.',1],['노옹~.',3],['으에.. 아프다..',3]];
+  var madLines=['맴매!','이리와보세용.','방망이 무겁다요..','때찌때찌'];
+  var TRIGGER='맴매형할게요.', bubble=document.getElementById('bubble'), txt=document.getElementById('bubble-text'), img=document.getElementById('walker-img');
+  var cur='', mad=false, t=null, mt=null;
+  function pick(){
+    if(mad){var m=madLines.filter(function(x){return x!==cur;});return m[Math.floor(Math.random()*m.length)];}
+    var p=lines.filter(function(l){return l[0]!==cur;}),tot=p.reduce(function(a,l){return a+l[1];},0),r=Math.random()*tot;
+    for(var i=0;i<p.length;i++){r-=p[i][1];if(r<0)return p[i][0];}return p[p.length-1][0];
+  }
+  document.getElementById('walker-btn').addEventListener('click',function(){
+    var next=pick(), goMad=!mad&&next===TRIGGER; cur=next;
+    bubble.hidden=true; void bubble.offsetWidth; txt.textContent=next; bubble.hidden=false;
+    clearTimeout(t); t=setTimeout(function(){bubble.hidden=true;cur='';},2200);
+    if(goMad){mad=true;img.src='img/chibi-bat.png';clearTimeout(mt);mt=setTimeout(function(){mad=false;img.src='img/chibi.png';},5000);}
+  });
+})();
+</script>
+</body>
+</html>
