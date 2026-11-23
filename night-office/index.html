@@ -6,7 +6,8 @@
 <title>야근 중인 사무실 · 레트로 PC</title>
 <style>
   html,body{margin:0;height:100%;background:#05070b;overflow:hidden;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-  #c{display:block;width:100%;height:100%;touch-action:none;outline:none}
+  #c{display:block;width:100%;height:100%;touch-action:none;outline:none;filter:saturate(.55) contrast(1.08) brightness(.92)}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 35%,rgba(0,0,0,.7) 100%)}
   #hud{position:fixed;left:16px;bottom:16px;color:#9ea9bd;font-size:12.5px;line-height:1.75;background:rgba(8,10,16,.6);border:1px solid rgba(255,255,255,.07);padding:10px 14px;border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;max-width:calc(100% - 64px)}
   #hud b{color:#e7ecf5;font-weight:600}
   #hud .t{color:#d9e2f2;font-weight:600;font-size:13px;margin-bottom:2px;letter-spacing:.02em}
@@ -21,12 +22,13 @@
 </head>
 <body>
 <canvas id="c" tabindex="0"></canvas>
+<div id="vig"></div>
 <div id="loading">불 꺼진 사무실로 들어가는 중…</div>
 <div id="hud">
   <div class="t">🌙 야근 중인 사무실</div>
   <b>마우스 드래그</b> 책상 위 마우스 움직이기 → 화면 커서 이동<br>
   <b>마우스 클릭</b> 화면 클릭 · 아이콘은 <b>더블클릭</b><br>
-  <b>빈 곳 드래그</b> 시점 회전 · <b>휠</b> 확대/축소<br>
+  <b>빈 곳 드래그</b> 시점 살짝 돌리기 · <b>휠</b> 조금 확대/축소<br>
   <b>스탠드 클릭</b> 조명 · <b>모니터 오른쪽 버튼</b> 전원 · 메모장에서 <b>키보드 입력</b>
 </div>
 
@@ -41,12 +43,12 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 0.78;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05070b);
-scene.fog = new THREE.FogExp2(0x05070b, 0.1);
+scene.background = new THREE.Color(0x040506);
+scene.fog = new THREE.FogExp2(0x040506, 0.18);
 
 const camera = new THREE.PerspectiveCamera(42, 1, 0.02, 60);
 camera.position.set(0.68, 1.3, 0.92);
@@ -161,9 +163,9 @@ const city = canvasTex(2048, 1024, (g, w, h) => {
   // moon
   const mx = 1500, my = 170;
   const glow = g.createRadialGradient(mx, my, 10, mx, my, 220);
-  glow.addColorStop(0, 'rgba(200,215,255,.45)'); glow.addColorStop(1, 'rgba(200,215,255,0)');
+  glow.addColorStop(0, 'rgba(180,190,210,.18)'); glow.addColorStop(1, 'rgba(200,215,255,0)');
   g.fillStyle = glow; g.fillRect(mx - 240, my - 240, 480, 480);
-  g.fillStyle = '#e8edff'; g.beginPath(); g.arc(mx, my, 46, 0, 7); g.fill();
+  g.fillStyle = '#9aa0ad'; g.beginPath(); g.arc(mx, my, 46, 0, 7); g.fill();
   g.fillStyle = 'rgba(170,180,210,.35)'; g.beginPath(); g.arc(mx - 12, my - 8, 10, 0, 7); g.arc(mx + 16, my + 14, 7, 0, 7); g.fill();
   const layer = (base, hmin, hmax, lit, alpha) => {
     let x = -20;
@@ -180,8 +182,8 @@ const city = canvasTex(2048, 1024, (g, w, h) => {
       x += bw + rnd(4, 30);
     }
   };
-  layer('#0e1122', 300, 700, .12, .45);
-  layer('#07080f', 200, 520, .16, .9);
+  layer('#0c0e16', 300, 700, .04, .3);
+  layer('#06070b', 200, 520, .06, .6);
 });
 const cityMesh = add(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: city, fog: false }), 0.4, 1.6, -5, scene, false, false);
 
@@ -260,7 +262,7 @@ const sc = document.createElement('canvas'); sc.width = SW; sc.height = SH;
 const g = sc.getContext('2d');
 const screenTex = new THREE.CanvasTexture(sc);
 screenTex.colorSpace = THREE.SRGBColorSpace; screenTex.anisotropy = 8;
-const screenMat = new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false });
+const screenMat = new THREE.MeshBasicMaterial({ map: screenTex, color: 0x9a9e9e, toneMapped: false });
 const screen = add(screenGeo, screenMat, 0, SCY, SZ + 0.0045, scene, false, false);
 
 const offTex = canvasTex(320, 240, (c, w, h) => {
@@ -410,7 +412,7 @@ function drawOS(now) {
   }
   // wallpaper
   const bg = g.createLinearGradient(0, 0, 0, SH);
-  bg.addColorStop(0, '#0e7373'); bg.addColorStop(1, '#0a5c62');
+  bg.addColorStop(0, '#34504f'); bg.addColorStop(1, '#253a3b');
   g.fillStyle = bg; g.fillRect(0, 0, SW, SH);
   g.fillStyle = 'rgba(255,255,255,.07)'; g.font = `bold 44px ${FONT}`; g.textAlign = 'right';
   g.fillText('NIGHT SHIFT 95', SW - 26, SH - TB - 34); g.textAlign = 'left';
@@ -615,10 +617,10 @@ const ldir = LT.clone().sub(H).normalize();
 const shade = add(new THREE.ConeGeometry(0.075, 0.11, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0x1d3b2f, roughness: .35, metalness: .5, side: THREE.DoubleSide }), 0, 0, 0, lamp);
 shade.position.copy(H).addScaledVector(ldir, 0.035);
 shade.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), ldir);
-const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xffc27a, emissiveIntensity: 3 });
+const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xd9a060, emissiveIntensity: 1.5 });
 const bulb = add(new THREE.SphereGeometry(0.02, 16, 12), bulbMat, 0, 0, 0, lamp, false, false);
 bulb.position.copy(H).addScaledVector(ldir, 0.06);
-const spot = new THREE.SpotLight(0xffb36b, 2.4, 3, 0.75, 0.65, 2);
+const spot = new THREE.SpotLight(0xd99a58, 1.2, 2.6, 0.7, 0.75, 2);
 spot.position.copy(H).addScaledVector(ldir, 0.065);
 spot.target.position.copy(LT);
 spot.castShadow = true; spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -0.0004; spot.shadow.camera.near = 0.02;
@@ -686,9 +688,9 @@ let lampOn = true;
 }
 
 /* ---------- lights ---------- */
-scene.add(new THREE.AmbientLight(0x30384d, 0.35));
-scene.add(new THREE.HemisphereLight(0x2a3a66, 0x0a0806, 0.35));
-const moon = new THREE.DirectionalLight(0x9fb4ff, 1.5);
+scene.add(new THREE.AmbientLight(0x23262d, 0.16));
+scene.add(new THREE.HemisphereLight(0x1d222c, 0x060505, 0.16));
+const moon = new THREE.DirectionalLight(0x7f8899, 0.75);
 moon.position.set(0.7, D + 3.0, -2.5);
 moon.target.position.set(0, D, -0.25);
 moon.castShadow = true;
@@ -696,7 +698,7 @@ moon.shadow.mapSize.set(2048, 2048);
 Object.assign(moon.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.5, far: 8 });
 moon.shadow.bias = -0.0005; moon.shadow.normalBias = 0.01;
 scene.add(moon, moon.target);
-const screenLight = new THREE.PointLight(0x58c6d0, 0.9, 2.6, 2);
+const screenLight = new THREE.PointLight(0x7f9fa2, 0.45, 2.2, 2);
 screenLight.position.set(0, SCY, SZ + 0.12);
 scene.add(screenLight);
 
@@ -709,7 +711,7 @@ for (let i = 0; i < dustN; i++) {
   dvel.push(rnd(0, Math.PI * 2));
 }
 dustGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
-const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xa9bbff, size: 0.005, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0x9099a8, size: 0.005, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
 scene.add(dust);
 
 /* ---------- sound (tiny synthesized clicks) ---------- */
@@ -737,7 +739,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const deskPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -(D + 0.004));
 const interactive = [mouse, lamp, powerBtn];
 const BOUNDS = { x0: 0.245, x1: 0.71, z0: -0.33, z1: -0.1 };
-const GAIN = 2300;
+const GAIN = 5200;
 let drag = null, down = null, pressAnim = 0;
 
 function aim(e) {
@@ -807,7 +809,7 @@ canvas.addEventListener('pointercancel', () => { drag = null; down = null; contr
 function toggleLamp() {
   lampOn = !lampOn; tick(0.5, 0.03, 1400);
   spot.visible = lampOn;
-  bulbMat.emissiveIntensity = lampOn ? 3 : 0;
+  bulbMat.emissiveIntensity = lampOn ? 1.5 : 0;
   bulbMat.color.set(lampOn ? 0xfff0d0 : 0x777066);
 }
 function togglePower() {
@@ -842,10 +844,11 @@ window.addEventListener('keydown', e => {
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0.05, 0.95, -0.45);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.minDistance = 0.45; controls.maxDistance = 3.2;
-controls.maxPolarAngle = Math.PI * 0.55;
-controls.minAzimuthAngle = -1.3; controls.maxAzimuthAngle = 1.3;
-controls.zoomSpeed = 0.8;
+controls.enablePan = false;
+controls.minDistance = 1.15; controls.maxDistance = 1.65;
+controls.minPolarAngle = 1.18; controls.maxPolarAngle = 1.45;
+controls.minAzimuthAngle = 0.12; controls.maxAzimuthAngle = 0.72;
+controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.5;
 
 /* ---------- resize + loop ---------- */
 function resize() {
@@ -869,7 +872,7 @@ function loop() {
     drawOS(now); screenTex.needsUpdate = true; os.dirty = false;
   }
   lastSec = sec; lastBlink = blink;
-  screenLight.intensity = 0.9 + Math.sin(t * 60) * 0.015 + (now < os.boot ? -0.6 : 0);
+  screenLight.intensity = 0.45 + Math.sin(t * 60) * 0.012 + (now < os.boot ? -0.3 : 0);
 
   // mouse click dip
   const pa = (now - pressAnim) / 140;
