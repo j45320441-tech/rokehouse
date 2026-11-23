@@ -8,7 +8,8 @@
   html,body{margin:0;height:100%;background:#05070b;overflow:hidden;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
   #c{display:block;width:100%;height:100%;touch-action:none;outline:none;filter:saturate(.55) contrast(1.08) brightness(.92)}
   #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 35%,rgba(0,0,0,.7) 100%)}
-  #hud{position:fixed;left:16px;bottom:16px;color:#9ea9bd;font-size:12.5px;line-height:1.75;background:rgba(8,10,16,.6);border:1px solid rgba(255,255,255,.07);padding:10px 14px;border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;max-width:calc(100% - 64px)}
+  #hud{position:fixed;left:16px;bottom:16px;color:#9ea9bd;font-size:12.5px;line-height:1.75;background:rgba(8,10,16,.6);border:1px solid rgba(255,255,255,.07);padding:10px 14px;border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;max-width:calc(100% - 64px);transition:opacity 1.2s}
+  #hud.hide{opacity:0}
   #hud b{color:#e7ecf5;font-weight:600}
   #hud .t{color:#d9e2f2;font-weight:600;font-size:13px;margin-bottom:2px;letter-spacing:.02em}
   #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#6f7a8f;font-size:14px;letter-spacing:.05em}
@@ -26,15 +27,12 @@
 <div id="loading">불 꺼진 사무실로 들어가는 중…</div>
 <div id="hud">
   <div class="t">🌙 야근 중인 사무실</div>
-  <b>마우스 드래그</b> 책상 위 마우스 움직이기 → 화면 커서 이동<br>
-  <b>마우스 클릭</b> 화면 클릭 · 아이콘은 <b>더블클릭</b><br>
-  <b>빈 곳 드래그</b> 시점 살짝 돌리기 · <b>휠</b> 조금 확대/축소<br>
-  <b>스탠드 클릭</b> 조명 · <b>모니터 오른쪽 버튼</b> 전원 · 메모장에서 <b>키보드 입력</b>
+  <b>드래그</b> 커서 이동 · <b>클릭</b> 화면 클릭 · 아이콘은 <b>더블클릭</b><br>
+  <b>모니터 오른쪽 아래 버튼</b> 전원 · 메모장에서 <b>키보드 입력</b>
 </div>
 
 <script type="module">
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const canvas = document.getElementById('c');
@@ -51,7 +49,6 @@ scene.background = new THREE.Color(0x040506);
 scene.fog = new THREE.FogExp2(0x040506, 0.18);
 
 const camera = new THREE.PerspectiveCamera(42, 1, 0.02, 60);
-camera.position.set(0.68, 1.3, 0.92);
 
 const D = 0.75; // desk top height
 
@@ -375,7 +372,7 @@ function drawWindow(w, now) {
   g.restore();
 }
 function drawCursor(x, y) {
-  g.save(); g.translate(Math.round(x), Math.round(y));
+  g.save(); g.translate(Math.round(x), Math.round(y)); g.scale(1.9, 1.9);
   g.beginPath();
   g.moveTo(0, 0); g.lineTo(0, 21); g.lineTo(5, 16); g.lineTo(9, 25); g.lineTo(12.5, 23.5); g.lineTo(8.5, 15); g.lineTo(15, 15); g.closePath();
   g.fillStyle = '#fff'; g.fill(); g.lineWidth = 1.6; g.strokeStyle = '#000'; g.stroke();
@@ -735,20 +732,18 @@ function beep(freq = 880, len = 0.12) {
 }
 
 /* ---------- interaction ---------- */
+// Camera is fixed on the screen, so dragging anywhere moves the desk mouse (and the cursor).
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-const deskPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -(D + 0.004));
-const interactive = [mouse, lamp, powerBtn];
+const interactive = [powerBtn];
 const BOUNDS = { x0: 0.245, x1: 0.71, z0: -0.33, z1: -0.1 };
-const GAIN = 5200;
+const GAIN = 2300;               // original cursor speed: px of screen per metre of mouse travel
+const deskPerPx = () => 1.19 / innerHeight; // same hand-feel as the original desk view
 let drag = null, down = null, pressAnim = 0;
 
-function aim(e) {
+function pick(e) {
   const r = canvas.getBoundingClientRect();
   ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-}
-function pick(e) {
-  aim(e);
   for (const h of ray.intersectObjects(interactive, true)) {
     let o = h.object;
     while (o && !o.userData.kind) o = o.parent;
@@ -756,55 +751,42 @@ function pick(e) {
   }
   return null;
 }
-const hitP = new THREE.Vector3();
 canvas.addEventListener('pointerdown', e => {
   canvas.focus();
   const kind = pick(e);
   down = { x: e.clientX, y: e.clientY, kind };
-  if (kind === 'mouse' && ray.ray.intersectPlane(deskPlane, hitP)) {
-    controls.enabled = false;
-    drag = { off: hitP.clone().sub(mouse.position), dist: 0 };
+  if (!kind) {
+    drag = { lx: e.clientX, ly: e.clientY };
     canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = 'grabbing';
+    canvas.style.cursor = 'none';
   }
 });
 canvas.addEventListener('pointermove', e => {
   if (drag) {
-    aim(e);
-    if (!ray.ray.intersectPlane(deskPlane, hitP)) return;
-    const nx = THREE.MathUtils.clamp(hitP.x - drag.off.x, BOUNDS.x0, BOUNDS.x1);
-    const nz = THREE.MathUtils.clamp(hitP.z - drag.off.z, BOUNDS.z0, BOUNDS.z1);
-    const dx = nx - mouse.position.x, dz = nz - mouse.position.z;
-    mouse.position.x = nx; mouse.position.z = nz;
-    mouse.rotation.y = THREE.MathUtils.lerp(mouse.rotation.y, -dx * 6, 0.3);
-    drag.dist += Math.hypot(e.movementX || 0, e.movementY || 0);
-    if (dx || dz) {
-      os.cx = THREE.MathUtils.clamp(os.cx + dx * GAIN, 0, SW - 2);
-      os.cy = THREE.MathUtils.clamp(os.cy + dz * GAIN, 0, SH - 2);
-      os.dirty = true;
-      updateCord();
-    }
+    const k = deskPerPx();
+    const dx = (e.clientX - drag.lx) * k, dz = (e.clientY - drag.ly) * k;
+    drag.lx = e.clientX; drag.ly = e.clientY;
+    if (!dx && !dz) return;
+    os.cx = THREE.MathUtils.clamp(os.cx + dx * GAIN, 0, SW - 2);
+    os.cy = THREE.MathUtils.clamp(os.cy + dz * GAIN, 0, SH - 2);
+    os.dirty = true;
+    mouse.position.x = THREE.MathUtils.clamp(mouse.position.x + dx, BOUNDS.x0, BOUNDS.x1);
+    mouse.position.z = THREE.MathUtils.clamp(mouse.position.z + dz, BOUNDS.z0, BOUNDS.z1);
+    updateCord();
     return;
   }
   if (e.buttons) return;
-  const k = pick(e);
-  canvas.style.cursor = k === 'mouse' ? 'grab' : k ? 'pointer' : '';
+  canvas.style.cursor = pick(e) ? 'pointer' : 'default';
 });
 canvas.addEventListener('pointerup', e => {
   const moved = down ? Math.hypot(e.clientX - down.x, e.clientY - down.y) : 99;
   if (drag) {
-    if (moved < 5) { // a click on the mouse = click on the computer
-      pressAnim = performance.now(); tick(0.35, 0.02, 3200); osClick();
-    }
-    drag = null; controls.enabled = true;
-    canvas.style.cursor = 'grab';
-  } else if (down && moved < 5) {
-    if (down.kind === 'lamp') toggleLamp();
-    else if (down.kind === 'power') togglePower();
-  }
+    if (moved < 5) { pressAnim = performance.now(); tick(0.35, 0.02, 3200); osClick(); }
+    drag = null; canvas.style.cursor = 'default';
+  } else if (down && moved < 5 && down.kind === 'power') togglePower();
   down = null;
 });
-canvas.addEventListener('pointercancel', () => { drag = null; down = null; controls.enabled = true; });
+canvas.addEventListener('pointercancel', () => { drag = null; down = null; canvas.style.cursor = 'default'; });
 
 function toggleLamp() {
   lampOn = !lampOn; tick(0.5, 0.03, 1400);
@@ -840,22 +822,17 @@ window.addEventListener('keydown', e => {
   } else if (e.key === ' ') e.preventDefault();
 });
 
-/* ---------- orbit controls (after our pointerdown, so we can disable it first) ---------- */
-const controls = new OrbitControls(camera, canvas);
-controls.target.set(0.05, 0.95, -0.45);
-controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.enablePan = false;
-controls.minDistance = 1.15; controls.maxDistance = 1.65;
-controls.minPolarAngle = 1.18; controls.maxPolarAngle = 1.45;
-controls.minAzimuthAngle = 0.12; controls.maxAzimuthAngle = 0.72;
-controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.5;
-
-/* ---------- resize + loop ---------- */
+/* ---------- fixed front view: screen fills ~80% of the window ---------- */
+const VIEW_Y = SCY - 0.02;          // a little low so the monitor buttons stay in frame
+const SCREEN_FRONT = SZ + 0.0115;
 function resize() {
-  const w = innerWidth, h = innerHeight;
+  const w = innerWidth, h = innerHeight, aspect = w / h;
   renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.fov = w / h < 0.9 ? 62 : 42;
+  camera.aspect = aspect; camera.fov = 42;
+  const t = 2 * Math.tan(THREE.MathUtils.degToRad(21));
+  const dist = Math.max((SHm / 0.8) / t, (SWm / 0.8) / (t * aspect));
+  camera.position.set(0, VIEW_Y, SCREEN_FRONT + dist);
+  camera.lookAt(0, VIEW_Y, SCREEN_FRONT);
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -864,7 +841,6 @@ let lastSec = -1, lastBlink = -1;
 const clock = new THREE.Clock();
 function loop() {
   const now = performance.now(), dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
-  controls.update();
 
   // screen redraw only when needed
   const sec = Math.floor(Date.now() / 1000), blink = Math.floor(now / 500);
@@ -902,6 +878,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 document.getElementById('loading').remove();
+setTimeout(() => document.getElementById('hud').classList.add('hide'), 7000);
 loop();
 </script>
 <script>
