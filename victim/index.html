@@ -623,7 +623,35 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const vpk = c.createBiquadFilter(); vpk.type = "peaking"; vpk.frequency.value = 900; vpk.Q.value = 1.4; vpk.gain.value = 7;
   vOut.connect(vpk).connect(vlp); vlp.connect(A.master);
   const vsend = c.createGain(); vsend.gain.value = 1.1; vlp.connect(vsend).connect(A.rev);
+  // '아-' 모음 (높은 음용): 소프라노 /a/ 포먼트
+  const vAh = c.createGain(); vAh.gain.value = 1;
+  const ahSum = c.createGain(); ahSum.gain.value = 1.6;
+  [[950, 4, 1], [1450, 6, .55], [2900, 9, .3], [3900, 10, .12]].forEach(([f, q, g]) => {
+   const bp = c.createBiquadFilter(), gg = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q; gg.gain.value = g;
+   vAh.connect(bp).connect(gg).connect(ahSum);
+  });
+  ahSum.connect(A.master); const asend = c.createGain(); asend.gain.value = 1.1; ahSum.connect(asend).connect(A.rev);
+  const HIGH = 690; // 이보다 높으면 '아-'
   let humSkip = 0;
+  /* 가끔 헛기침: 흠흠 */
+  function ahem(){
+   const t = c.currentTime + .05, base = rnd(230, 290);
+   [[0, .17, 1], [.3, .22, .88]].forEach(([d, len, p]) => {
+    const t0 = t + d, o = c.createOscillator(), g = c.createGain(), fry = c.createOscillator(), fg = c.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(base * p * 1.12, t0); o.frequency.exponentialRampToValueAtTime(base * p * .82, t0 + len);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(.16, t0 + .02); g.gain.setTargetAtTime(0.0001, t0 + len * .6, len * .25);
+    fry.type = "square"; fry.frequency.value = rnd(28, 40); fg.gain.value = .06; fry.connect(fg).connect(g.gain);
+    const ns = c.createBufferSource(), nb = c.createBiquadFilter(), ng = c.createGain();
+    ns.buffer = A.noise; nb.type = "bandpass"; nb.frequency.value = rnd(500, 800); nb.Q.value = 1.2;
+    ng.gain.setValueAtTime(0.0001, t0); ng.gain.exponentialRampToValueAtTime(.12, t0 + .015); ng.gain.exponentialRampToValueAtTime(0.0001, t0 + len * .7);
+    o.connect(g); ns.connect(nb).connect(ng); g.connect(vOut); ng.connect(vOut);
+    [o, fry].forEach(n => { n.start(t0); n.stop(t0 + len + .3); }); ns.start(t0, Math.random()); ns.stop(t0 + len);
+   });
+  }
+  (function ahemLoop(){
+   setTimeout(() => { if (A.started && c.currentTime > humBusy) ahem(); ahemLoop(); }, rnd(25000, 55000));
+  })();
+  let humBusy = 0;
   function hum(ls, fromBar, bars){
    const notes = melN.filter(([s]) => s >= fromBar * 3 && s < (fromBar + bars) * 3);
    if (!notes.length) return;
@@ -632,7 +660,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    const lagOf = i => rnd(.12, .3) + i * drift;
    const st = ls + timeOf(notes[0][0]) + lagOf(0);
    const last = notes[notes.length - 1], en = ls + timeOf(last[0] + last[1]) + 1.2;
-   const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st); amp.connect(vOut);
+   const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st);
+   const humG = c.createGain(), ahG = c.createGain(); amp.connect(humG).connect(vOut); amp.connect(ahG).connect(vAh); humG.gain.value = 1; ahG.gain.value = 0;
+   humBusy = Math.max(humBusy, en);
    const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(); mix.gain.value = .5;
    o1.type = "sawtooth"; o2.type = "triangle"; o2.detune.value = 5;
    o1.connect(mix); o2.connect(mix); mix.connect(amp);
@@ -648,6 +678,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     const fr = f * off * flat * 2 ** (-wind * 40 / 1200);
     if (i === 0){ o1.frequency.setValueAtTime(fr * .97, t0); o2.frequency.setValueAtTime(fr * .97, t0); }
     o1.frequency.setTargetAtTime(fr, t0, .09); o2.frequency.setTargetAtTime(fr, t0, .09);
+    const ah = fr > HIGH ? 1 : 0;
+    humG.gain.setTargetAtTime(ah ? .15 : 1, t0, .08); ahG.gain.setTargetAtTime(ah ? 1 : 0, t0, .08);
+    bg.gain.setTargetAtTime(ah ? .08 : .05, t0, .1);
     amp.gain.setTargetAtTime(.04, t0, .03);
     amp.gain.setTargetAtTime(.085 * rnd(.85, 1), t0 + .06, .12);
     vd.gain.setTargetAtTime(0, t0, .02); vd.gain.setTargetAtTime(22, t0 + .25, .2);
