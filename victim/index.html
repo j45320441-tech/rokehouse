@@ -272,7 +272,7 @@ th{font-size:16px}
 .still,.still *{animation:none!important;transition:none!important}
 .tscreen.shake{animation:sh .3s}
 .late{opacity:0}
-.late.shown{opacity:1;animation:redin .9s steps(6)}
+.late.shown{opacity:1;animation:redin .68s steps(6)}
 @keyframes redin{0%{opacity:0;transform:translateX(-4px)}20%{opacity:1;text-shadow:3px 0 #fff}40%{opacity:.2}60%{opacity:1;transform:translateX(3px);text-shadow:-3px 0 #fff}100%{transform:none;text-shadow:none}}
 @media(max-width:820px){
  .hero,.cls,.case,.ph,.pb,.org-card{grid-template-columns:minmax(0,1fr)}
@@ -814,7 +814,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  function scramble(el){
   const nodes = [], tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()) nodes.push([tw.currentNode, tw.currentNode.nodeValue]);
-  const t0 = performance.now() + 450, dur = 1500;
+  const t0 = performance.now() + 225, dur = 1000;
   (function f(now){
    const k = Math.max(0, Math.min(1, (now - t0) / dur));
    nodes.forEach(([n, s]) => {
@@ -824,13 +824,13 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    if (k < 1) requestAnimationFrame(f);
   })(t0);
  }
- const reveal = el => { el.classList.add("revealing"); setTimeout(() => { el.classList.add("shown"); scramble(el); }, rnd(600, 1300)); };
+ const reveal = el => { el.classList.add("revealing"); setTimeout(() => { el.classList.add("shown"); scramble(el); }, rnd(360, 840)); };
  if (!calm.matches) document.querySelectorAll("#world .r:not(svg), #characters .r:not(svg)").forEach(el => el.classList.add("late"));
  setInterval(() => {
   document.querySelectorAll(".late:not(.revealing)").forEach(el => {
    if (!el.offsetParent && el.getClientRects().length === 0) return;
    const r = el.getBoundingClientRect();
-   if (r.top < innerHeight * .62) reveal(el);
+   if (r.top < innerHeight * .74) reveal(el);
   });
  }, 120);
 
