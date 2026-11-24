@@ -620,7 +620,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   /* 소녀 허밍 (소프라노, 멀리서) */
   const vOut = c.createGain(); vOut.gain.value = .9;
   const vlp = c.createBiquadFilter(); vlp.type = "lowpass"; vlp.frequency.value = 1700; vlp.Q.value = .8;
-  const vpk = c.createBiquadFilter(); vpk.type = "peaking"; vpk.frequency.value = 900; vpk.Q.value = 1.4; vpk.gain.value = 7;
+  const vpk = c.createBiquadFilter(); vpk.type = "peaking"; vpk.frequency.value = 1000; vpk.Q.value = 1; vpk.gain.value = 4;
   vOut.connect(vpk).connect(vlp); vlp.connect(A.master);
   const vsend = c.createGain(); vsend.gain.value = 1.1; vlp.connect(vsend).connect(A.rev);
   // '아-' 모음 (높은 음용): 소프라노 /a/ 포먼트
@@ -630,8 +630,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    const bp = c.createBiquadFilter(), gg = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q; gg.gain.value = g;
    vAh.connect(bp).connect(gg).connect(ahSum);
   });
+  const ahBody = c.createBiquadFilter(); ahBody.type = "lowpass"; ahBody.frequency.value = 1300; const abg = c.createGain(); abg.gain.value = .45; vAh.connect(ahBody).connect(abg).connect(ahSum);
   ahSum.connect(A.master); const asend = c.createGain(); asend.gain.value = 1.1; ahSum.connect(asend).connect(A.rev);
-  const HIGH = 690; // 이보다 높으면 '아-'
+  const HIGH = 480; // 이보다 높으면 '아-' (B4부터)
   let humSkip = 0;
   /* 가끔 헛기침: 흠흠 */
   function ahem(){
@@ -652,6 +653,10 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    setTimeout(() => { if (A.started && c.currentTime > humBusy) ahem(); ahemLoop(); }, rnd(25000, 55000));
   })();
   let humBusy = 0;
+  // 사람 목소리에 가까운 성대 파형 (배음이 부드럽게 줄어듦)
+  const nH = 48, re = new Float32Array(nH), im = new Float32Array(nH);
+  for (let k = 1; k < nH; k++) im[k] = (1 / k ** 1.55) * (k > 1 ? rnd(.85, 1.1) : 1);
+  const glottal = c.createPeriodicWave(re, im);
   function hum(ls, fromBar, bars){
    const notes = melN.filter(([s]) => s >= fromBar * 3 && s < (fromBar + bars) * 3);
    if (!notes.length) return;
@@ -660,33 +665,53 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    const lagOf = i => rnd(.12, .3) + i * drift;
    const st = ls + timeOf(notes[0][0]) + lagOf(0);
    const last = notes[notes.length - 1], en = ls + timeOf(last[0] + last[1]) + 1.2;
-   const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st);
-   const humG = c.createGain(), ahG = c.createGain(); amp.connect(humG).connect(vOut); amp.connect(ahG).connect(vAh); humG.gain.value = 1; ahG.gain.value = 0;
    humBusy = Math.max(humBusy, en);
-   const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(); mix.gain.value = .5;
-   o1.type = "sawtooth"; o2.type = "triangle"; o2.detune.value = 5;
+   const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st);
+   const shim = c.createGain(); shim.gain.value = 1; amp.connect(shim);
+   const humG = c.createGain(), ahG = c.createGain(); humG.gain.value = 1; ahG.gain.value = 0;
+   shim.connect(humG).connect(vOut); shim.connect(ahG).connect(vAh);
+   // 성대 소리: 아주 살짝 다른 두 겹 (한 사람 목소리의 자연스러운 흔들림)
+   const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(); mix.gain.value = .55;
+   o1.setPeriodicWave(glottal); o2.setPeriodicWave(glottal); o1.detune.value = -4; o2.detune.value = 5;
    o1.connect(mix); o2.connect(mix); mix.connect(amp);
-   const vib = c.createOscillator(), vd = c.createGain(); vib.frequency.value = rnd(4.8, 5.6); vd.gain.value = 0;
+   // 비브라토 (늦게 들어오고 속도도 살짝 흔들림)
+   const vib = c.createOscillator(), vd = c.createGain(); vib.frequency.value = rnd(5, 5.8); vd.gain.value = 0;
    vib.connect(vd); vd.connect(o1.detune); vd.connect(o2.detune);
+   const vr = c.createOscillator(), vrg = c.createGain(); vr.frequency.value = .7; vrg.gain.value = .5; vr.connect(vrg).connect(vib.frequency);
+   // 지터(음정 미세 떨림) · 시머(크기 미세 떨림)
+   const jn = c.createBufferSource(); jn.buffer = A.noise; jn.loop = true;
+   const jlp = c.createBiquadFilter(); jlp.type = "lowpass"; jlp.frequency.value = 9;
+   const jg = c.createGain(); jg.gain.value = 26; jn.connect(jlp); jlp.connect(jg); jg.connect(o1.detune); jg.connect(o2.detune);
+   const sg = c.createGain(); sg.gain.value = .35; jlp.connect(sg).connect(shim.gain);
+   // 숨소리
    const br = c.createBufferSource(), bbp = c.createBiquadFilter(), bg = c.createGain();
-   br.buffer = A.noise; br.loop = true; bbp.type = "bandpass"; bbp.frequency.value = 2600; bbp.Q.value = 1.5; bg.gain.value = .05;
+   br.buffer = A.noise; br.loop = true; bbp.type = "bandpass"; bbp.frequency.value = 2200; bbp.Q.value = .9; bg.gain.value = .035;
    br.connect(bbp).connect(bg).connect(amp);
+   // 부르기 전 들숨
+   const inh = c.createBufferSource(), ibp = c.createBiquadFilter(), ig = c.createGain();
+   inh.buffer = A.noise; ibp.type = "bandpass"; ibp.frequency.value = 1700; ibp.Q.value = .7;
+   ig.gain.setValueAtTime(0.0001, st - .45); ig.gain.exponentialRampToValueAtTime(.05, st - .08); ig.gain.exponentialRampToValueAtTime(0.0001, st);
+   inh.connect(ibp).connect(ig).connect(vOut); inh.start(Math.max(c.currentTime, st - .45), Math.random()); inh.stop(st + .05);
+   let prev = 0;
    notes.forEach(([s, d, f], i) => {
     const t0 = ls + timeOf(s) + lagOf(i), t1 = ls + timeOf(s + d) + lagOf(i);
     const wind = Math.max(0, (s - 42) / 6);
     const off = Math.random() < .18 ? 2 ** ((Math.random() < .5 ? -1 : 1) * (Math.random() < .5 ? 1 : 2) / 12) : 1;
     const fr = f * off * flat * 2 ** (-wind * 40 / 1200);
-    if (i === 0){ o1.frequency.setValueAtTime(fr * .97, t0); o2.frequency.setValueAtTime(fr * .97, t0); }
-    o1.frequency.setTargetAtTime(fr, t0, .09); o2.frequency.setTargetAtTime(fr, t0, .09);
+    // 음 시작은 살짝 아래에서 끌어올리고, 아주 조금 넘었다가 자리 잡음
+    if (i === 0){ o1.frequency.setValueAtTime(fr * .955, t0); o2.frequency.setValueAtTime(fr * .955, t0); }
+    [o1, o2].forEach(o => { o.frequency.setTargetAtTime(fr * 1.006, t0, .06); o.frequency.setTargetAtTime(fr, t0 + .18, .1); });
     const ah = fr > HIGH ? 1 : 0;
-    humG.gain.setTargetAtTime(ah ? .15 : 1, t0, .08); ahG.gain.setTargetAtTime(ah ? 1 : 0, t0, .08);
-    bg.gain.setTargetAtTime(ah ? .08 : .05, t0, .1);
-    amp.gain.setTargetAtTime(.04, t0, .03);
-    amp.gain.setTargetAtTime(.085 * rnd(.85, 1), t0 + .06, .12);
-    vd.gain.setTargetAtTime(0, t0, .02); vd.gain.setTargetAtTime(22, t0 + .25, .2);
-    if (i === notes.length - 1) amp.gain.setTargetAtTime(0.0001, t1 - .1, .25);
+    humG.gain.setTargetAtTime(ah ? .12 : 1, t0, .12); ahG.gain.setTargetAtTime(ah ? 1 : 0, t0, .12);
+    bg.gain.setTargetAtTime(ah ? .055 : .035, t0, .15);
+    const lvl = .085 * rnd(.85, 1.05) * (fr > prev && prev ? 1.05 : 1);
+    if (i === 0) amp.gain.exponentialRampToValueAtTime(lvl, t0 + .16);
+    else { amp.gain.setTargetAtTime(lvl * .78, t0, .04); amp.gain.setTargetAtTime(lvl, t0 + .07, .1); }
+    vd.gain.setTargetAtTime(0, t0, .03); vd.gain.setTargetAtTime(d >= 2 ? 24 : 12, t0 + .3, .25);
+    if (i === notes.length - 1){ amp.gain.setTargetAtTime(0.0001, t1 - .05, .3); vd.gain.setTargetAtTime(30, t1 - .3, .2); }
+    prev = fr;
    });
-   [o1, o2, vib, br].forEach(n => { n.start(st); n.stop(en + 1.2); });
+   [o1, o2, vib, vr, br, jn].forEach(n => { n.start(st); n.stop(en + 1.2); });
   }
   function scheduleHums(ls){
    const phrases = [0, 4, 8, 12].filter(() => Math.random() < .4);
