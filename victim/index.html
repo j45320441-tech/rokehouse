@@ -618,7 +618,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   };
   const clickT = when => { const s = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain(); s.buffer = A.noise; hp.type = "highpass"; hp.frequency.value = 6000; g.gain.setValueAtTime(.025, when); g.gain.exponentialRampToValueAtTime(0.0001, when + .015); s.connect(hp).connect(g).connect(mb); s.start(when, Math.random()); s.stop(when + .03); };
   /* 소녀 허밍 (소프라노, 멀리서) */
-  const vOut = c.createGain(); vOut.gain.value = .55;
+  const vOut = c.createGain(); vOut.gain.value = .9;
   const vlp = c.createBiquadFilter(); vlp.type = "lowpass"; vlp.frequency.value = 1700; vlp.Q.value = .8;
   const vpk = c.createBiquadFilter(); vpk.type = "peaking"; vpk.frequency.value = 900; vpk.Q.value = 1.4; vpk.gain.value = 7;
   vOut.connect(vpk).connect(vlp); vlp.connect(A.master);
@@ -627,8 +627,11 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   function hum(ls, fromBar, bars){
    const notes = melN.filter(([s]) => s >= fromBar * 3 && s < (fromBar + bars) * 3);
    if (!notes.length) return;
-   const st = ls + timeOf(notes[0][0]) + rnd(.02, .09);
-   const last = notes[notes.length - 1], en = ls + timeOf(last[0] + last[1]) + .25;
+   // 오르골과 어긋나게: 늦게 따라오고, 점점 더 밀리고, 음정은 살짝 낮게
+   const flat = 2 ** (rnd(-32, -12) / 1200), drift = rnd(.012, .03);
+   const lagOf = i => rnd(.12, .3) + i * drift;
+   const st = ls + timeOf(notes[0][0]) + lagOf(0);
+   const last = notes[notes.length - 1], en = ls + timeOf(last[0] + last[1]) + 1.2;
    const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st); amp.connect(vOut);
    const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(); mix.gain.value = .5;
    o1.type = "sawtooth"; o2.type = "triangle"; o2.detune.value = 5;
@@ -639,13 +642,14 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    br.buffer = A.noise; br.loop = true; bbp.type = "bandpass"; bbp.frequency.value = 2600; bbp.Q.value = 1.5; bg.gain.value = .05;
    br.connect(bbp).connect(bg).connect(amp);
    notes.forEach(([s, d, f], i) => {
-    const t0 = ls + timeOf(s) + rnd(.02, .08), t1 = ls + timeOf(s + d);
+    const t0 = ls + timeOf(s) + lagOf(i), t1 = ls + timeOf(s + d) + lagOf(i);
     const wind = Math.max(0, (s - 42) / 6);
-    const fr = f * 2 ** (-wind * 40 / 1200);
+    const off = Math.random() < .18 ? 2 ** ((Math.random() < .5 ? -1 : 1) * (Math.random() < .5 ? 1 : 2) / 12) : 1;
+    const fr = f * off * flat * 2 ** (-wind * 40 / 1200);
     if (i === 0){ o1.frequency.setValueAtTime(fr * .97, t0); o2.frequency.setValueAtTime(fr * .97, t0); }
-    o1.frequency.setTargetAtTime(fr, t0, .05); o2.frequency.setTargetAtTime(fr, t0, .05);
+    o1.frequency.setTargetAtTime(fr, t0, .09); o2.frequency.setTargetAtTime(fr, t0, .09);
     amp.gain.setTargetAtTime(.04, t0, .03);
-    amp.gain.setTargetAtTime(.07 * rnd(.85, 1), t0 + .06, .12);
+    amp.gain.setTargetAtTime(.085 * rnd(.85, 1), t0 + .06, .12);
     vd.gain.setTargetAtTime(0, t0, .02); vd.gain.setTargetAtTime(22, t0 + .25, .2);
     if (i === notes.length - 1) amp.gain.setTargetAtTime(0.0001, t1 - .1, .25);
    });
