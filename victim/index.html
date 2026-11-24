@@ -62,9 +62,8 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;bac
 .load{margin-top:40px;font-size:18px}
 .tscreen{display:none;position:relative;overflow:hidden;height:100vh;height:100dvh;min-height:520px}
 .tscreen.on{display:block}
-.key{position:absolute;top:0;right:0;width:70%;height:100%;object-fit:cover;object-position:58% 30%;opacity:0;transform:scale(1.06);transition:opacity 1.6s ease,transform 6s ease-out}
+.key{position:absolute;top:0;right:0;width:70%;height:100%;object-fit:cover;object-position:58% 30%;-webkit-mask:linear-gradient(90deg,transparent 0,rgba(0,0,0,.45) 17%,#000 37%),linear-gradient(0deg,transparent 0,#000 30%);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,transparent 0,rgba(0,0,0,.45) 17%,#000 37%),linear-gradient(0deg,transparent 0,#000 30%);mask-composite:intersect;opacity:0;transform:scale(1.06);transition:opacity 1.6s ease,transform 6s ease-out}
 .tscreen.go .key{opacity:1;transform:scale(1)}
-.tscreen::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#000 0,#000 30%,rgba(0,0,0,.55) 42%,rgba(0,0,0,0) 56%),linear-gradient(0deg,#000 0,rgba(0,0,0,0) 30%)}
 .tbox{position:absolute;z-index:2;left:max(5vw,20px);bottom:clamp(96px,14vh,150px);right:max(5vw,20px)}
 .kicker{font-size:14px;color:var(--dim);margin:0 0 6px;opacity:0;transition:opacity .6s .2s}
 .tscreen.go .kicker{opacity:1}
@@ -281,7 +280,7 @@ th{font-size:16px}
  .den{margin:0}
  .key{width:100%;height:var(--kh);object-position:60% 30%}
  .tscreen{--kh:min(112vw,62vh)}
- .tscreen::before{background:linear-gradient(180deg,transparent 0,transparent calc(var(--kh) - 140px),#000 var(--kh))}
+ .key{-webkit-mask:linear-gradient(180deg,#000 calc(100% - 140px),transparent 100%);mask:linear-gradient(180deg,#000 calc(100% - 140px),transparent 100%)}
  .tbox{bottom:clamp(70px,10vh,110px)}
 }
 @media(max-width:600px){
@@ -595,53 +594,82 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   el.style.left = x + "px"; el.style.top = y + "px";
  }
  function shatter(cx, cy){
-  const W = innerWidth, H = innerHeight, far = Math.hypot(W, H) * 1.2;
+  const img = $("#warn .key"), r = img.getBoundingClientRect();
+  const far = Math.hypot(r.width, r.height) * 1.1;
   const n = 14, rays = [];
   for (let i = 0; i < n; i++) rays.push((i + Math.random() * .7) / n * Math.PI * 2);
-  const ring = rays.map(() => rnd(50, 120));
+  const ring = rays.map(() => rnd(45, 110));
   const pt = (a, d) => [cx + Math.cos(a) * d, cy + Math.sin(a) * d];
-  // 금 간 선
+  // 금 간 선 (사진 영역 안에서만)
   const svgNS = "http://www.w3.org/2000/svg";
   const cr = document.createElementNS(svgNS, "svg"); cr.setAttribute("class", "cracks");
   let d = "";
   rays.forEach((a, i) => {
-   let [x, y] = [cx, cy]; d += `M${x} ${y}`;
+   d += `M${cx} ${cy}`;
    for (let k = 1; k <= 6; k++){ const p = pt(a + rnd(-.06, .06), far / 6 * k * rnd(.8, 1)); d += `L${p[0]} ${p[1]}`; }
    const p1 = pt(a, ring[i]), p2 = pt(rays[(i + 1) % n], ring[(i + 1) % n]);
    d += `M${p1[0]} ${p1[1]}L${p2[0]} ${p2[1]}`;
   });
-  cr.innerHTML = `<path d="${d}" fill="none" stroke="#fff" stroke-width="1.6" opacity=".9"/><circle cx="${cx}" cy="${cy}" r="10" fill="var(--red)"/><circle cx="${cx}" cy="${cy}" r="26" fill="none" stroke="var(--red)" stroke-width="2" opacity=".7"/>`;
+  cr.innerHTML = `<defs><clipPath id="crclip"><rect x="${r.left}" y="${r.top}" width="${r.width}" height="${r.height}"/></clipPath></defs><g clip-path="url(#crclip)"><path d="${d}" fill="none" stroke="#fff" stroke-width="1.6" opacity=".85"/></g><circle cx="${cx}" cy="${cy}" r="9" fill="var(--red)"/><circle cx="${cx}" cy="${cy}" r="24" fill="none" stroke="var(--red)" stroke-width="2" opacity=".7"/>`;
   document.body.appendChild(cr);
   return () => {
    const box = document.createElement("div"); box.className = "shards";
-   const src = $("#warn");
+   const cs = getComputedStyle(img);
    const polys = [];
    for (let i = 0; i < n; i++){
     const a1 = rays[i], a2 = rays[(i + 1) % n] + (i === n - 1 ? Math.PI * 2 : 0);
     const i1 = pt(a1, ring[i]), i2 = pt(a2, ring[(i + 1) % n]);
-    polys.push({ p: [[cx, cy], i1, i2], a: (a1 + a2) / 2, inner: true });
-    const mid = rnd(.35, .6) * far;
+    polys.push({ p: [[cx, cy], i1, i2], a: (a1 + a2) / 2, k: 0 });
+    const mid = rnd(.3, .5) * far;
     const m1 = pt(a1, mid), m2 = pt(a2, mid * rnd(.85, 1.15));
-    polys.push({ p: [i1, m1, m2, i2], a: (a1 + a2) / 2, inner: false });
-    polys.push({ p: [m1, pt(a1, far), pt(a2, far), m2], a: (a1 + a2) / 2, inner: false, outer: true });
+    polys.push({ p: [i1, m1, m2, i2], a: (a1 + a2) / 2, k: 1 });
+    polys.push({ p: [m1, pt(a1, far), pt(a2, far), m2], a: (a1 + a2) / 2, k: 2 });
    }
    polys.forEach(o => {
     const s = document.createElement("div"); s.className = "shard";
     s.style.clipPath = `polygon(${o.p.map(q => `${q[0]}px ${q[1]}px`).join(",")})`;
-    const c = src.cloneNode(true); c.removeAttribute("id"); c.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
-    c.classList.add("still"); s.appendChild(c); box.appendChild(s);
-    const dist = o.inner ? rnd(120, 260) : o.outer ? rnd(30, 120) : rnd(60, 180);
+    const c = img.cloneNode(); c.removeAttribute("alt");
+    Object.assign(c.style, { position: "absolute", left: r.left + "px", top: r.top + "px", right: "auto", width: r.width + "px", height: r.height + "px", opacity: 1, transform: "none", transition: "none", objectPosition: cs.objectPosition });
+    s.appendChild(c); box.appendChild(s);
+    const dist = [rnd(120, 240), rnd(60, 160), rnd(20, 90)][o.k];
     const dx = Math.cos(o.a) * dist, dy = Math.sin(o.a) * dist;
     s.animate([
      { transform: "none", opacity: 1 },
      { transform: `translate(${dx * .4}px,${dy * .4}px) rotate(${rnd(-4, 4)}deg)`, opacity: 1, offset: .25 },
-     { transform: `translate(${dx}px,${dy + rnd(380, 700)}px) rotate(${rnd(-35, 35)}deg) scale(${rnd(.85, 1)})`, opacity: 0 }
-    ], { duration: rnd(800, 1150), easing: "cubic-bezier(.4,0,.9,.6)", fill: "forwards" });
+     { transform: `translate(${dx}px,${dy + rnd(360, 640)}px) rotate(${rnd(-35, 35)}deg) scale(${rnd(.85, 1)})`, opacity: 0 }
+    ], { duration: rnd(850, 1150), easing: "cubic-bezier(.4,0,.9,.6)", fill: "forwards" });
    });
+   img.style.transition = "none"; img.style.opacity = 0;
    document.body.appendChild(box);
-   cr.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" });
+   cr.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: "forwards" });
    setTimeout(() => { box.remove(); cr.remove(); }, 1250);
   };
+ }
+ /* 노이즈로 화면 넘기기 */
+ function noiseWipe(atPeak){
+  const w = Math.ceil(innerWidth / 4), h = Math.ceil(innerHeight / 4);
+  nz.width = w; nz.height = h;
+  const img = cx.createImageData(w, h), dd = img.data;
+  const t0 = performance.now(), up = 520, hold = 160, down = 700;
+  let switched = false;
+  nz.classList.add("on");
+  (function frame(now){
+   const e = now - t0;
+   for (let i = 0; i < dd.length; i += 4){ const v = Math.random() * 255 | 0; dd[i] = dd[i+1] = dd[i+2] = v; dd[i+3] = 255; }
+   cx.putImageData(img, 0, 0);
+   let o;
+   if (e < up) o = (e / up) ** 1.6;
+   else if (e < up + hold) o = 1;
+   else o = Math.max(0, 1 - (e - up - hold) / down);
+   nz.style.opacity = o;
+   document.body.classList.toggle("gl", e < up + hold);
+   document.body.style.setProperty("--gx", (Math.random() < .5 ? -1 : 1) * rnd(0, 4 + o * 14) + "px");
+   tear.style.display = o > .15 && Math.random() < .7 ? "block" : "none";
+   tear.style.top = rnd(0, 100) + "vh"; tear.style.height = rnd(2, 10 + o * 50) + "px";
+   if (!switched && e >= up){ switched = true; atPeak(); }
+   if (e < up + hold + down) requestAnimationFrame(frame);
+   else { nz.classList.remove("on"); nz.style.opacity = ""; tear.style.display = "none"; document.body.classList.remove("gl"); }
+  })(t0);
  }
  let firing = false;
  $("#ok").addEventListener("click", async () => {
@@ -665,8 +693,13 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const go = shatter(np.x, np.y);
   sn.style.opacity = 0;
   await wait(420);
-  go(); toHub();
-  setTimeout(() => { sn.remove(); fl.remove(); w.classList.remove("shake"); firing = false; }, 1300);
+  go();
+  await wait(650);
+  noiseWipe(() => {
+   toHub();
+   const k = w.querySelector(".key"); k.style.opacity = ""; k.style.transition = "";
+  });
+  setTimeout(() => { sn.remove(); fl.remove(); w.classList.remove("shake"); firing = false; }, 1500);
  });
 
  if (!seen && !location.hash) boot(); else route();
