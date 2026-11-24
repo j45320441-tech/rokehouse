@@ -554,7 +554,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   A.fx = ctx.createGain(); A.fx.gain.value = .9; A.fx.connect(A.master);
   A.noise = noiseBuffer(ctx, 2);
   // 1) 낮은 드론 (단2도 불협화음)
-  const dr = ctx.createGain(); dr.gain.value = .05; dr.connect(A.master);
+  const dr = ctx.createGain(); dr.gain.value = .014; dr.connect(A.master);
   const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 240; lp.Q.value = 7; lp.connect(dr);
   [[55, "sawtooth"], [58.27, "sawtooth"], [27.5, "sine"]].forEach(([f, ty]) => { const o = ctx.createOscillator(); o.type = ty; o.frequency.value = f; o.connect(lp); o.start(); });
   const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .06; lg.gain.value = 150; lfo.connect(lg).connect(lp.frequency); lfo.start();
@@ -594,10 +594,10 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    ["A5",2,"G5",1],["F5",2,"E5",1],["D5",1,"B4",1,"G#4",1],["A4",3]];
   const ch = ["A2 C4 E4","A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4","D2 F3 A3","E2 G#3 B3","A2 C4 E4",
               "C3 E3 G3","C3 E3 G3","A2 C4 E4","E2 G#3 B3","F2 A3 C4","D2 F3 A3","E2 G#3 B3","A2 C4 E4"];
-  const ev = [];
+  const ev = [], melN = [];
   mel.forEach((bar, b) => {
    let at = b * 3;
-   for (let i = 0; i < bar.length; i += 2){ ev.push([at, N(bar[i]), .11]); at += bar[i + 1]; }
+   for (let i = 0; i < bar.length; i += 2){ ev.push([at, N(bar[i]), .11]); melN.push([at, bar[i + 1], N(bar[i])]); at += bar[i + 1]; }
    const [bs, c1, c2] = ch[b].split(" ");
    ev.push([b * 3, N(bs), .07], [b * 3 + 1, N(c1), .035], [b * 3 + 1, N(c2), .035], [b * 3 + 2, N(c1), .03], [b * 3 + 2, N(c2), .03]);
   });
@@ -617,12 +617,52 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    });
   };
   const clickT = when => { const s = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain(); s.buffer = A.noise; hp.type = "highpass"; hp.frequency.value = 6000; g.gain.setValueAtTime(.025, when); g.gain.exponentialRampToValueAtTime(0.0001, when + .015); s.connect(hp).connect(g).connect(mb); s.start(when, Math.random()); s.stop(when + .03); };
+  /* 소녀 허밍 (소프라노, 멀리서) */
+  const vOut = c.createGain(); vOut.gain.value = .55;
+  const vlp = c.createBiquadFilter(); vlp.type = "lowpass"; vlp.frequency.value = 1700; vlp.Q.value = .8;
+  const vpk = c.createBiquadFilter(); vpk.type = "peaking"; vpk.frequency.value = 900; vpk.Q.value = 1.4; vpk.gain.value = 7;
+  vOut.connect(vpk).connect(vlp); vlp.connect(A.master);
+  const vsend = c.createGain(); vsend.gain.value = 1.1; vlp.connect(vsend).connect(A.rev);
+  let humSkip = 0;
+  function hum(ls, fromBar, bars){
+   const notes = melN.filter(([s]) => s >= fromBar * 3 && s < (fromBar + bars) * 3);
+   if (!notes.length) return;
+   const st = ls + timeOf(notes[0][0]) + rnd(.02, .09);
+   const last = notes[notes.length - 1], en = ls + timeOf(last[0] + last[1]) + .25;
+   const amp = c.createGain(); amp.gain.setValueAtTime(0.0001, st); amp.connect(vOut);
+   const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(); mix.gain.value = .5;
+   o1.type = "sawtooth"; o2.type = "triangle"; o2.detune.value = 5;
+   o1.connect(mix); o2.connect(mix); mix.connect(amp);
+   const vib = c.createOscillator(), vd = c.createGain(); vib.frequency.value = rnd(4.8, 5.6); vd.gain.value = 0;
+   vib.connect(vd); vd.connect(o1.detune); vd.connect(o2.detune);
+   const br = c.createBufferSource(), bbp = c.createBiquadFilter(), bg = c.createGain();
+   br.buffer = A.noise; br.loop = true; bbp.type = "bandpass"; bbp.frequency.value = 2600; bbp.Q.value = 1.5; bg.gain.value = .05;
+   br.connect(bbp).connect(bg).connect(amp);
+   notes.forEach(([s, d, f], i) => {
+    const t0 = ls + timeOf(s) + rnd(.02, .08), t1 = ls + timeOf(s + d);
+    const wind = Math.max(0, (s - 42) / 6);
+    const fr = f * 2 ** (-wind * 40 / 1200);
+    if (i === 0){ o1.frequency.setValueAtTime(fr * .97, t0); o2.frequency.setValueAtTime(fr * .97, t0); }
+    o1.frequency.setTargetAtTime(fr, t0, .05); o2.frequency.setTargetAtTime(fr, t0, .05);
+    amp.gain.setTargetAtTime(.04, t0, .03);
+    amp.gain.setTargetAtTime(.07 * rnd(.85, 1), t0 + .06, .12);
+    vd.gain.setTargetAtTime(0, t0, .02); vd.gain.setTargetAtTime(22, t0 + .25, .2);
+    if (i === notes.length - 1) amp.gain.setTargetAtTime(0.0001, t1 - .1, .25);
+   });
+   [o1, o2, vib, br].forEach(n => { n.start(st); n.stop(en + 1.2); });
+  }
+  function scheduleHums(ls){
+   const phrases = [0, 4, 8, 12].filter(() => Math.random() < .4);
+   if (!phrases.length && ++humSkip > 1){ phrases.push([0, 4, 8, 12][Math.random() * 4 | 0]); }
+   if (phrases.length) humSkip = 0;
+   phrases.forEach(b => hum(ls, b, Math.random() < .3 && b < 12 ? 8 : 4));
+  }
   setInterval(() => {
    if (!A.started){ loopStart = 0; return; }
    const now = c.currentTime;
-   if (!loopStart){ loopStart = now + .3; idx = 0; }
+   if (!loopStart){ loopStart = now + .3; idx = 0; scheduleHums(loopStart); }
    while (true){
-    if (idx >= ev.length){ if (now + .4 > loopStart + loopLen - .3){ loopStart += loopLen; idx = 0; } else break; }
+    if (idx >= ev.length){ if (now + .4 > loopStart + loopLen - .3){ loopStart += loopLen; idx = 0; scheduleHums(loopStart); } else break; }
     const [x, f, v] = ev[idx], when = loopStart + timeOf(x);
     if (when > now + .4) break;
     if (when > now) { const wind = Math.max(0, (x - 42) / 6); pluck(when, f, v * (1 - wind * .35), wind); if (Math.random() < .25) clickT(when); }
