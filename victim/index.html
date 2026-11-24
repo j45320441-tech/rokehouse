@@ -558,6 +558,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   }, fast ? 20 : 190 + Math.random()*120);
  }
  function title(){
+  if (window.__resetFx) window.__resetFx();
   const w = $("#warn"), ttl = $("#ttl");
   const txt = "dear. L!ar";
   ttl.innerHTML = [...txt].map(c => c === " " ? "<br>" : `<span class="${c === "!" ? "bang" : ""}">${c}</span>`).join("");
@@ -780,28 +781,42 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   f.addEventListener("blur", () => { clearTimeout(wait); conceal(); });
  });
 
- /* 스크롤 연출: 사진 찢기, 도장 */
+ /* 스크롤 연출: 사진 찢기, 도장 (타이틀로 돌아갔다 오면 다시 실행) */
+ let fxGen = 0, fxIOs = [];
  const once = (el, th, fn) => {
   if (!el) return;
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ io.disconnect(); fn(); } }), {threshold: th});
-  io.observe(el);
+  const g = fxGen;
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && g === fxGen){ io.disconnect(); fn(g); } }), {threshold: th});
+  io.observe(el); fxIOs.push(io);
  };
- const who = $("#who");
- once(who, .75, () => {
-  if (calm.matches){ who.classList.add("torn"); return; }
-  setTimeout(() => {
-   who.classList.add("ripping"); burst(160, false);
-   setTimeout(() => { who.classList.remove("ripping"); who.classList.add("torn"); }, 330);
-  }, 450);
- });
- const seal = $("#seal");
- once(seal && seal.closest(".org-card"), .85, () => {
-  if (calm.matches){ seal.style.opacity = .92; seal.style.transform = "rotate(-14deg)"; return; }
-  setTimeout(() => {
-   seal.classList.add("on");
-   setTimeout(() => seal.closest(".org-card").classList.add("hit"), 300);
-  }, 350);
- });
+ const who = $("#who"), seal = $("#seal"), card = seal && seal.closest(".org-card");
+ function armFx(){
+  once(who, .75, g => {
+   if (calm.matches){ who.classList.add("torn"); return; }
+   setTimeout(() => {
+    if (g !== fxGen) return;
+    who.classList.add("ripping"); burst(160, false);
+    setTimeout(() => { if (g !== fxGen) return; who.classList.remove("ripping"); who.classList.add("torn"); }, 330);
+   }, 450);
+  });
+  once(card, .85, g => {
+   if (calm.matches){ seal.style.opacity = .92; seal.style.transform = "rotate(-14deg)"; return; }
+   setTimeout(() => {
+    if (g !== fxGen) return;
+    seal.classList.add("on");
+    setTimeout(() => { if (g === fxGen) card.classList.add("hit"); }, 300);
+   }, 350);
+  });
+ }
+ armFx();
+ window.__resetFx = () => {
+  fxGen++;
+  fxIOs.forEach(io => io.disconnect()); fxIOs = [];
+  who.classList.remove("torn", "ripping");
+  seal.classList.remove("on"); seal.style.opacity = ""; seal.style.transform = ""; card.classList.remove("hit");
+  document.querySelectorAll(".late").forEach(el => { el.classList.remove("revealing", "shown"); restoreText(el); });
+  armFx();
+ };
 
  /* CCTV 시계 */
  const clk = $("#clk");
@@ -811,9 +826,16 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
 
  /* 빨간 글씨: 스크롤해서 보일 때 나타남 */
  const glyphs = "■□▮▯#%&@$!?01ABCDEFXYZ";
+ const orig = new WeakMap();
+ function textNodes(el){
+  const out = [], tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()){ const n = tw.currentNode; if (!orig.has(n)) orig.set(n, n.nodeValue); out.push(n); }
+  return out;
+ }
+ function restoreText(el){ textNodes(el).forEach(n => n.nodeValue = orig.get(n)); el.__run = (el.__run || 0) + 1; }
  function scramble(el){
-  const nodes = [], tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()) nodes.push([tw.currentNode, tw.currentNode.nodeValue]);
+  const run = el.__run = (el.__run || 0) + 1;
+  const nodes = textNodes(el).map(n => [n, orig.get(n)]);
   const t0 = performance.now() + 225, dur = 1000;
   (function f(now){
    const k = Math.max(0, Math.min(1, (now - t0) / dur));
@@ -821,7 +843,8 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     const keep = Math.floor(s.length * k);
     n.nodeValue = s.slice(0, keep) + [...s.slice(keep)].map(c => c === " " ? " " : glyphs[Math.random() * glyphs.length | 0]).join("");
    });
-   if (k < 1) requestAnimationFrame(f);
+   if (k < 1 && el.__run === run) requestAnimationFrame(f);
+   else if (el.__run !== run) nodes.forEach(([n, s]) => n.nodeValue = s);
   })(t0);
  }
  const reveal = el => { el.classList.add("revealing"); setTimeout(() => { el.classList.add("shown"); scramble(el); }, rnd(360, 840)); };
