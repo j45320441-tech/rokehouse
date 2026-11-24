@@ -274,6 +274,13 @@ th{font-size:16px}
 .late{opacity:0}
 .late.shown{opacity:1;animation:redin .68s steps(6)}
 @keyframes redin{0%{opacity:0;transform:translateX(-4px)}20%{opacity:1;text-shadow:3px 0 #fff}40%{opacity:.2}60%{opacity:1;transform:translateX(3px);text-shadow:-3px 0 #fff}100%{transform:none;text-shadow:none}}
+.snd{position:fixed;right:14px;bottom:14px;z-index:80;display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 12px;border:2px solid #fff;background:#000;color:#fff;font-size:12px}
+.snd svg{width:18px;height:18px;fill:currentColor;shape-rendering:crispEdges}
+.snd .x{display:none}.snd.off .x{display:block;fill:var(--red)}.snd.off .w{display:none}
+.snd:not(.off) .w{animation:pulse 1s steps(2) infinite}
+.snd:hover{background:#fff;color:#000}
+body.v-boot .snd{display:none}
+body.v-warn .snd{bottom:58px}
 @media(max-width:820px){
  .hero,.cls,.case,.ph,.pb,.org-card{grid-template-columns:minmax(0,1fr)}
  .who{max-width:190px}
@@ -515,6 +522,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  </div>
 </main>
 
+<button id="snd" class="snd px" aria-pressed="false" title="배경음악 켜기/끄기"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 5h3l4-3v12l-4-3H1z"/><path class="w" d="M10 5h1v6h-1zM12 3h1v10h-1zM14 6h1v4h-1z"/><path class="x" d="M10 5h1v1h-1zM11 6h1v1h-1zM12 7h1v2h-1zM11 9h1v1h-1zM10 10h1v1h-1zM13 6h1v1h-1zM14 5h1v1h-1zM13 9h1v1h-1zM14 10h1v1h-1z"/></svg><span>BGM OFF</span></button>
 <canvas id="noise" aria-hidden="true"></canvas><div id="tear" aria-hidden="true"></div>
 <script>
 {
@@ -526,7 +534,138 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  const names = {files:"내부 문서",world:"세계관",characters:"캐릭터",classified:"기밀문서",webtoon:"웹툰"};
  const top = $("#top");
 
+ /* ===== 사운드: 코드로 만든 분위기음 + 효과음 ===== */
+ const A = { ctx: null, on: true, started: false };
+ try { A.on = localStorage.getItem("victim-bgm") !== "off"; } catch(e){}
+ function noiseBuffer(ctx, sec){
+  const b = ctx.createBuffer(1, ctx.sampleRate * sec, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+ }
+ function audioInit(){
+  if (A.ctx) return true;
+  const C = window.AudioContext || window.webkitAudioContext; if (!C) return false;
+  const ctx = A.ctx = new C();
+  A.master = ctx.createGain(); A.master.gain.value = 0; A.master.connect(ctx.destination);
+  // 잔향
+  const len = ctx.sampleRate * 3.5, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++){ const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2.6; }
+  A.rev = ctx.createConvolver(); A.rev.buffer = ir; const rg = ctx.createGain(); rg.gain.value = .55; A.rev.connect(rg).connect(A.master);
+  A.fx = ctx.createGain(); A.fx.gain.value = .9; A.fx.connect(A.master);
+  A.noise = noiseBuffer(ctx, 2);
+  // 1) 낮은 드론 (단2도 불협화음)
+  const dr = ctx.createGain(); dr.gain.value = .075; dr.connect(A.master);
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 240; lp.Q.value = 7; lp.connect(dr);
+  [[55, "sawtooth"], [58.27, "sawtooth"], [27.5, "sine"]].forEach(([f, ty]) => { const o = ctx.createOscillator(); o.type = ty; o.frequency.value = f; o.connect(lp); o.start(); });
+  const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .06; lg.gain.value = 150; lfo.connect(lg).connect(lp.frequency); lfo.start();
+  // 2) 빗소리 같은 잡음
+  const rain = ctx.createBufferSource(); rain.buffer = A.noise; rain.loop = true;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1200;
+  const lp2 = ctx.createBiquadFilter(); lp2.type = "lowpass"; lp2.frequency.value = 6000;
+  const rgn = ctx.createGain(); rgn.gain.value = .016;
+  rain.connect(hp).connect(lp2).connect(rgn).connect(A.master); rain.start();
+  const fl = ctx.createOscillator(), flg = ctx.createGain(); fl.frequency.value = .23; flg.gain.value = .006; fl.connect(flg).connect(rgn.gain); fl.start();
+  // 3) 시계 초침
+  let tk = 0;
+  setInterval(() => { if (!A.started) return; tick(tk++ % 2 ? 2600 : 2100); }, 1000);
+  // 4) 가끔 울리는 차가운 종소리
+  const notes = [220, 233.08, 261.63, 311.13, 349.23, 466.16];
+  (function chime(){
+   setTimeout(() => {
+    if (A.started){ const n = notes[Math.random() * notes.length | 0] * (Math.random() < .5 ? 1 : 2); bell(n); if (Math.random() < .35) setTimeout(() => bell(n * (Math.random() < .5 ? 1.0595 : .9439)), 260); }
+    chime();
+   }, rnd(5000, 12000));
+  })();
+  return true;
+ }
+ function env(g, t, a, peak, dec){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
+ function tick(f){
+  const c = A.ctx, t = c.currentTime, s = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = A.noise; bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 12;
+  env(g, t, .002, .09, .04); s.connect(bp).connect(g).connect(A.master); s.start(t, Math.random()); s.stop(t + .08);
+ }
+ function bell(f){
+  const c = A.ctx, t = c.currentTime;
+  [[f, .05], [f * 2.76, .012]].forEach(([fr, v]) => {
+   const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = fr;
+   env(g, t, .01, v, 4.5); o.connect(g); g.connect(A.master); g.connect(A.rev); o.start(t); o.stop(t + 5);
+  });
+ }
+ function sfxStatic(sec, vol){
+  if (!A.started) return;
+  const c = A.ctx, t = c.currentTime, s = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = A.noise; bp.type = "bandpass"; bp.frequency.value = rnd(1500, 5000); bp.Q.value = .7;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01);
+  for (let k = .03; k < sec; k += .03) g.gain.setValueAtTime(vol * rnd(.2, 1), t + k);
+  g.gain.linearRampToValueAtTime(0, t + sec + .02);
+  s.connect(bp).connect(g).connect(A.fx); s.start(t, Math.random()); s.stop(t + sec + .05);
+ }
+ function sfxSwell(up, hold, down){
+  if (!A.started) return;
+  const c = A.ctx, t = c.currentTime, s = c.createBufferSource(), g = c.createGain(), hp = c.createBiquadFilter();
+  s.buffer = A.noise; s.loop = true; hp.type = "highpass"; hp.frequency.value = 400;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.32, t + up); g.gain.setValueAtTime(.32, t + up + hold); g.gain.linearRampToValueAtTime(0, t + up + hold + down);
+  s.connect(hp).connect(g).connect(A.fx); s.start(t); s.stop(t + up + hold + down + .05);
+ }
+ function sfxBeep(f, dur, vol){
+  if (!A.started) return;
+  const c = A.ctx, t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = "square"; o.frequency.value = f; g.gain.setValueAtTime(vol || .035, t); g.gain.setValueAtTime(0, t + dur);
+  o.connect(g).connect(A.fx); o.start(t); o.stop(t + dur + .01);
+ }
+ function sfxShot(){
+  if (!A.started) return;
+  const c = A.ctx, t = c.currentTime;
+  const s = c.createBufferSource(), lp = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = A.noise; lp.type = "lowpass"; lp.frequency.setValueAtTime(5000, t); lp.frequency.exponentialRampToValueAtTime(300, t + .35);
+  env(g, t, .002, .7, .45); s.connect(lp).connect(g); g.connect(A.fx); g.connect(A.rev); s.start(t); s.stop(t + .6);
+  const o = c.createOscillator(), og = c.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(35, t + .35);
+  env(og, t, .003, .8, .4); o.connect(og).connect(A.fx); o.start(t); o.stop(t + .5);
+  // 유리 금 가는 소리
+  for (let i = 0; i < 9; i++){
+   const tt = t + .02 + Math.random() * .22, p = c.createOscillator(), pg = c.createGain();
+   p.type = "triangle"; p.frequency.value = rnd(2500, 7000); env(pg, tt, .001, rnd(.02, .06), rnd(.04, .12));
+   p.connect(pg); pg.connect(A.fx); pg.connect(A.rev); p.start(tt); p.stop(tt + .2);
+  }
+  const cr = c.createBufferSource(), hp = c.createBiquadFilter(), cg = c.createGain();
+  cr.buffer = A.noise; hp.type = "highpass"; hp.frequency.value = 3500; env(cg, t + .01, .002, .25, .3);
+  cr.connect(hp).connect(cg).connect(A.fx); cr.start(t, .5); cr.stop(t + .4);
+ }
+ function sfxBlot(){
+  if (!A.started) return;
+  sfxStatic(.45, .22);
+  const c = A.ctx, t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = "square"; o.frequency.value = 62; env(g, t, .01, .09, .5); o.connect(g).connect(A.fx); o.start(t); o.stop(t + .6);
+ }
+ function audioStart(){
+  if (!A.on) return;
+  if (!audioInit()) return;
+  A.ctx.resume && A.ctx.resume();
+  A.started = true;
+  const t = A.ctx.currentTime; A.master.gain.cancelScheduledValues(t); A.master.gain.setValueAtTime(A.master.gain.value, t); A.master.gain.linearRampToValueAtTime(1, t + 2.5);
+  sndUI();
+ }
+ function audioStop(){
+  if (!A.ctx) return;
+  const t = A.ctx.currentTime; A.master.gain.cancelScheduledValues(t); A.master.gain.setValueAtTime(A.master.gain.value, t); A.master.gain.linearRampToValueAtTime(0, t + .4);
+  A.started = false; sndUI();
+ }
+ function sndUI(){
+  const b = $("#snd"); if (!b) return;
+  const playing = A.on && A.started;
+  b.setAttribute("aria-pressed", playing); b.querySelector("span").textContent = playing ? "BGM ON" : "BGM OFF";
+  b.classList.toggle("off", !playing);
+ }
+ $("#snd").addEventListener("click", () => {
+  if (A.on && A.started){ A.on = false; audioStop(); }
+  else { A.on = true; audioStart(); }
+  try { localStorage.setItem("victim-bgm", A.on ? "on" : "off"); } catch(e){}
+  sndUI();
+ });
+ sndUI();
+
  function show(id){
+  document.body.className = document.body.className.replace(/\bv-\S+/g, "").trim() + " v-" + id;
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on","flick"));
   const v = document.getElementById(id);
   v.classList.add("on","flick");
@@ -595,6 +734,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  }
  const neckPoint = () => imgMap()(0.585, 0.69);
  function aimTo(el, x, y, ms){
+  sfxBeep(rnd(900, 1300), .035);
   el.style.transition = `opacity .12s, left ${ms}ms cubic-bezier(.6,0,.3,1), top ${ms}ms cubic-bezier(.6,0,.3,1)`;
   el.style.left = x + "px"; el.style.top = y + "px";
  }
@@ -653,6 +793,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const img = cx.createImageData(w, h), dd = img.data;
   const t0 = performance.now(), up = 300, hold = 90, down = 460;
   let switched = false;
+  sfxSwell(up / 1000, hold / 1000, down / 1000);
   nz.classList.add("on");
   (function frame(now){
    const e = now - t0;
@@ -675,6 +816,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  let firing = false;
  $("#ok").addEventListener("click", async () => {
   if (firing) return;
+  audioStart();
   if (matchMedia("(prefers-reduced-motion: reduce)").matches){ toHub(); return; }
   firing = true;
   const w = $("#warn");
@@ -687,14 +829,15 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   let np = neckPoint();
   aimTo(sn, np.x + rnd(-30, 30), np.y + rnd(-24, 24), 220); await wait(230);
   np = neckPoint(); aimTo(sn, np.x, np.y, 120); await wait(130);
-  sn.classList.add("lock"); await wait(300);
+  sn.classList.add("lock"); [0, 70, 140].forEach(d => setTimeout(() => sfxBeep(1900, .04, .045), d)); await wait(300);
   const fl = document.createElement("div"); fl.className = "flash"; document.body.appendChild(fl);
+  sfxShot();
   fl.animate([{ opacity: .9 }, { opacity: 0 }], { duration: 120, fill: "forwards" });
   burst(140, true); w.classList.add("shake");
   const go = shatter(np.x, np.y);
   sn.style.opacity = 0;
   await wait(300);
-  const unblot = blackout();
+  const unblot = blackout(); sfxBlot();
   await wait(420);
   noiseWipe(() => { toHub(); go(); unblot(); });
   setTimeout(() => { sn.remove(); fl.remove(); w.classList.remove("shake"); firing = false; }, 900);
@@ -734,6 +877,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  const calm = matchMedia("(prefers-reduced-motion: reduce)");
  const rnd = (a,b) => a + Math.random()*(b-a);
  function burst(ms, strong){
+  sfxStatic(ms / 1000, strong ? .14 : .06);
   const w = Math.ceil(innerWidth/4), h = Math.ceil(innerHeight/4);
   nz.width = w; nz.height = h;
   const img = cx.createImageData(w,h), d = img.data;
