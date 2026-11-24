@@ -554,7 +554,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   A.fx = ctx.createGain(); A.fx.gain.value = .9; A.fx.connect(A.master);
   A.noise = noiseBuffer(ctx, 2);
   // 1) 낮은 드론 (단2도 불협화음)
-  const dr = ctx.createGain(); dr.gain.value = .075; dr.connect(A.master);
+  const dr = ctx.createGain(); dr.gain.value = .05; dr.connect(A.master);
   const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 240; lp.Q.value = 7; lp.connect(dr);
   [[55, "sawtooth"], [58.27, "sawtooth"], [27.5, "sine"]].forEach(([f, ty]) => { const o = ctx.createOscillator(); o.type = ty; o.frequency.value = f; o.connect(lp); o.start(); });
   const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .06; lg.gain.value = 150; lfo.connect(lg).connect(lp.frequency); lfo.start();
@@ -569,14 +569,66 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   let tk = 0;
   setInterval(() => { if (!A.started) return; tick(tk++ % 2 ? 2600 : 2100); }, 1000);
   // 4) 가끔 울리는 차가운 종소리
-  const notes = [220, 233.08, 261.63, 311.13, 349.23, 466.16];
+  const notes = [220, 261.63, 329.63, 392, 440, 233.08];
   (function chime(){
    setTimeout(() => {
     if (A.started){ const n = notes[Math.random() * notes.length | 0] * (Math.random() < .5 ? 1 : 2); bell(n); if (Math.random() < .35) setTimeout(() => bell(n * (Math.random() < .5 ? 1.0595 : .9439)), 260); }
     chime();
-   }, rnd(5000, 12000));
+   }, rnd(9000, 18000));
   })();
+  musicBox();
   return true;
+ }
+ /* 기계음 자장가: 태엽 오르골 (A단조 3/4박, 직접 작곡) */
+ function musicBox(){
+  const c = A.ctx;
+  const mb = c.createGain(); mb.gain.value = .5;
+  const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3800;
+  mb.connect(lp); lp.connect(A.master);
+  const send = c.createGain(); send.gain.value = .45; lp.connect(send).connect(A.rev);
+  const N = n => { const m = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }; const s = n.match(/([A-G])(#?)(\d)/); return 440 * 2 ** ((m[s[1]] + (s[2] ? 1 : 0) + (+s[3] + 1) * 12 - 69) / 12); };
+  const mel = [
+   ["E5",2,"C5",1],["A4",2,"B4",1],["C5",1,"B4",1,"A4",1],["G#4",3],
+   ["E5",2,"C5",1],["A4",2,"D5",1],["C5",1,"B4",1,"G#4",1],["A4",3],
+   ["C5",2,"D5",1],["E5",2,"F5",1],["E5",1,"D5",1,"C5",1],["B4",3],
+   ["A5",2,"G5",1],["F5",2,"E5",1],["D5",1,"B4",1,"G#4",1],["A4",3]];
+  const ch = ["A2 C4 E4","A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4","D2 F3 A3","E2 G#3 B3","A2 C4 E4",
+              "C3 E3 G3","C3 E3 G3","A2 C4 E4","E2 G#3 B3","F2 A3 C4","D2 F3 A3","E2 G#3 B3","A2 C4 E4"];
+  const ev = [];
+  mel.forEach((bar, b) => {
+   let at = b * 3;
+   for (let i = 0; i < bar.length; i += 2){ ev.push([at, N(bar[i]), .11]); at += bar[i + 1]; }
+   const [bs, c1, c2] = ch[b].split(" ");
+   ev.push([b * 3, N(bs), .07], [b * 3 + 1, N(c1), .035], [b * 3 + 1, N(c2), .035], [b * 3 + 2, N(c1), .03], [b * 3 + 2, N(c2), .03]);
+  });
+  ev.sort((a, b) => a[0] - b[0]);
+  const beat0 = 60 / 66, total = 48;
+  // 박자 → 시간 (마지막 두 마디는 태엽이 풀리듯 느려짐)
+  const timeOf = x => { const slow = 42; if (x <= slow) return x * beat0; const y = x - slow; return slow * beat0 + beat0 * (y + y * y * .09); };
+  const loopLen = timeOf(total) + 2.2;
+  let loopStart = 0, idx = 0;
+  const pluck = (when, f, v, wind) => {
+   const det = rnd(-7, 7) + Math.sin(when * 1.3) * 6 - wind * 40;
+   [[1, 1, 1.5], [4.01, .18, .35], [2, .25, .9]].forEach(([m, amp, dec]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine"; o.frequency.value = f * m; o.detune.value = det;
+    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v * amp, when + .004); g.gain.exponentialRampToValueAtTime(0.0001, when + dec);
+    o.connect(g).connect(mb); o.start(when); o.stop(when + dec + .05);
+   });
+  };
+  const clickT = when => { const s = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain(); s.buffer = A.noise; hp.type = "highpass"; hp.frequency.value = 6000; g.gain.setValueAtTime(.025, when); g.gain.exponentialRampToValueAtTime(0.0001, when + .015); s.connect(hp).connect(g).connect(mb); s.start(when, Math.random()); s.stop(when + .03); };
+  setInterval(() => {
+   if (!A.started){ loopStart = 0; return; }
+   const now = c.currentTime;
+   if (!loopStart){ loopStart = now + .3; idx = 0; }
+   while (true){
+    if (idx >= ev.length){ if (now + .4 > loopStart + loopLen - .3){ loopStart += loopLen; idx = 0; } else break; }
+    const [x, f, v] = ev[idx], when = loopStart + timeOf(x);
+    if (when > now + .4) break;
+    if (when > now) { const wind = Math.max(0, (x - 42) / 6); pluck(when, f, v * (1 - wind * .35), wind); if (Math.random() < .25) clickT(when); }
+    idx++;
+   }
+  }, 90);
  }
  function env(g, t, a, peak, dec){ g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
  function tick(f){
