@@ -271,8 +271,9 @@ th{font-size:16px}
 .blot canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
 .still,.still *{animation:none!important;transition:none!important}
 .tscreen.shake{animation:sh .3s}
-.late{opacity:0}
-.late.shown{opacity:1;animation:redin .68s steps(6)}
+.late{opacity:0;filter:blur(10px);transition:opacity 1.3s ease,filter 1.6s ease}
+.late.shown{opacity:1;filter:blur(0)}
+.late.reset{transition:none}
 @keyframes redin{0%{opacity:0;transform:translateX(-4px)}20%{opacity:1;text-shadow:3px 0 #fff}40%{opacity:.2}60%{opacity:1;transform:translateX(3px);text-shadow:-3px 0 #fff}100%{transform:none;text-shadow:none}}
 .snd{position:fixed;right:14px;bottom:14px;z-index:80;display:flex;align-items:center;gap:8px;min-height:40px;padding:6px 12px;border:2px solid #fff;background:#000;color:#fff;font-size:12px}
 .snd svg{width:18px;height:18px;fill:currentColor;shape-rendering:crispEdges}
@@ -1127,7 +1128,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   fxIOs.forEach(io => io.disconnect()); fxIOs = [];
   who.classList.remove("torn", "ripping");
   seal.classList.remove("on"); seal.style.opacity = ""; seal.style.transform = ""; card.classList.remove("hit");
-  document.querySelectorAll(".late").forEach(el => { el.classList.remove("revealing", "shown"); restoreText(el); });
+  document.querySelectorAll(".late").forEach(el => { el.classList.add("reset"); el.classList.remove("revealing", "shown"); restoreText(el); void el.offsetWidth; el.classList.remove("reset"); });
   armFx();
  };
 
@@ -1160,7 +1161,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    else if (el.__run !== run) nodes.forEach(([n, s]) => n.nodeValue = s);
   })(t0);
  }
- const reveal = el => { el.classList.add("revealing"); setTimeout(() => { el.classList.add("shown"); scramble(el); }, rnd(360, 840)); };
+ const reveal = el => { el.classList.add("revealing"); setTimeout(() => el.classList.add("shown"), rnd(360, 840)); };
  if (!calm.matches) document.querySelectorAll("#world .r:not(svg), #characters .r:not(svg)").forEach(el => el.classList.add("late"));
  setInterval(() => {
   document.querySelectorAll(".late:not(.revealing)").forEach(el => {
