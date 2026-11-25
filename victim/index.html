@@ -756,13 +756,14 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    ["A5",2,"G5",1],["F5",2,"E5",1],["D5",1,"B4",1,"G#4",1],["A4",3]];
   const chA = ["A2 C4 E4","A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4","D2 F3 A3","E2 G#3 B3","A2 C4 E4",
                "C3 E3 G3","C3 E3 G3","A2 C4 E4","E2 G#3 B3","F2 A3 C4","D2 F3 A3","E2 G#3 B3","A2 C4 E4"];
+  // B: 밝은 장조 구간 (C장조, 높고 가볍게)
   const melB = [
-   ["C5",2,"E5",1],["G5",2,"E5",1],["F5",1,"E5",1,"D5",1],["E5",3],
-   ["C5",2,"E5",1],["A5",2,"G5",1],["F5",1,"D5",1,"B4",1],["C5",3],
-   ["D5",2,"F5",1],["A5",2,"F5",1],["E5",1,"D5",1,"C5",1],["B4",3],
-   ["C5",1,"B4",1,"A4",1],["G#4",2,"B4",1],["A4",1,"C5",1,"E5",1],["A4",3]];
-  const chB = ["C3 E3 G3","C3 E3 G3","D3 F3 A3","C3 E3 G3","A2 C4 E4","F2 A3 C4","G2 B3 D4","C3 E3 G3",
-               "D2 F3 A3","F2 A3 C4","A2 C4 E4","E2 G#3 B3","A2 C4 E4","E2 G#3 B3","A2 C4 E4","A2 C4 E4"];
+   ["G5",1,"E5",1,"G5",1],["C6",2,"G5",1],["A5",1,"G5",1,"F5",1],["E5",3],
+   ["F5",1,"A5",1,"C6",1],["E5",1,"G5",1,"C6",1],["D5",1,"F5",1,"B5",1],["C6",3],
+   ["A5",1,"G5",1,"E5",1],["F5",1,"E5",1,"D5",1],["E5",1,"C5",1,"D5",1],["G5",3],
+   ["G5",1,"A5",1,"B5",1],["C6",2,"E5",1],["D5",1,"G5",1,"F5",1],["E5",3]];
+  const C_ = "C3 E3 G3", F_ = "F2 A3 C4", G_ = "G2 B3 D4", Am = "A2 C4 E4", Dm = "D3 F3 A3", E_ = "E2 G#3 B3";
+  const chB = [C_,C_,F_,C_, F_,C_,G_,C_, Am,Dm,C_,G_, G_,C_,G_,E_];
   const melC = [["E5",3],["C5",3],["B4",3],["A4",3]], chC = ["A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4"];
   const song = [];
   melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 1, org: false }));
@@ -790,17 +791,16 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     }
    }
   });
-  // 하프: 4마디 이후 두 마디마다 화음을 위로 굴려 연주, 구간이 바뀔 때는 글리산도
+  // 하프: 오르골 멜로디를 한 옥타브 아래에서 같은 박자로 따라가고, 마디 첫 박에 화음을 살짝 긁음
+  const scMinor = ["A3","B3","C4","D4","E4","F4","G#4","A4","B4","C5","D5","E5","F5","G#5","A5"].map(N);
+  const scMajor = ["G3","A3","B3","C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5"].map(N);
   song.forEach((bar, b) => {
    if (b < 4 || b >= BARS - 1) return;
+   if (b % 16 === 0) (b === 16 ? scMajor : scMinor).forEach((f, k) => ev.push([b * 3 - 1.4 + k * .09, f, .045 + k * .002, "harp"]));
+   let at = b * 3;
+   for (let i = 0; i < bar.m.length; i += 2){ const f = N(bar.m[i]) * bar.oct; ev.push([at, bar.oct > 1 ? f / 2 : f / 2, .05, "harp"]); at += bar.m[i + 1]; }
    const [bs, c1, c2] = bar.c.split(" ").map(N);
-   if (b % 16 === 0){
-    const sc = ["A3","B3","C4","D4","E4","F4","G#4","A4","B4","C5","D5","E5","F5","G#5","A5"].map(N);
-    sc.forEach((f, k) => ev.push([b * 3 - 1.4 + k * .09, f, .05 + k * .002, "harp"]));
-   }
-   if (b % 2 === 0){
-    [bs * 2, c1, c2, c1 * 2, c2 * 2, c1 * 4].forEach((f, k) => ev.push([b * 3 + k * .2, f, .055 - k * .004, "harp"]));
-   }
+   [bs * 2, c1, c2].forEach((f, k) => ev.push([b * 3 + k * .06, f, .032, "harp"]));
   });
   ev.sort((a, b) => a[0] - b[0]);
   const beat0 = 60 / 66;
@@ -819,7 +819,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const hlp = c.createBiquadFilter(); hlp.type = "lowpass"; hlp.frequency.value = 4200;
   harpBus.connect(hlp).connect(A.master); const hsend = c.createGain(); hsend.gain.value = .7; hlp.connect(hsend).connect(A.rev);
   function harp(when, f, v, wind){
-   const det = rnd(-5, 5) - wind * 40;
+   const det = tuneAt(when, wind) + rnd(-2, 2);
    [[1, 1, 2.8], [2.003, .45, 1.6], [3.01, .22, .9], [4.02, .1, .55], [5.03, .05, .35]].forEach(([m, a, dec]) => {
     const o = c.createOscillator(), g = c.createGain(); o.type = m === 1 ? "triangle" : "sine"; o.frequency.value = f * m; o.detune.value = det;
     g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v * a, when + .003); g.gain.exponentialRampToValueAtTime(0.0001, when + dec);
@@ -844,8 +844,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    });
   }
   let loopStart = 0, idx = 0;
+  const tuneAt = (when, wind) => Math.sin(when * 1.3) * 5 - wind * 40;
   const pluck = (when, f, v, wind) => {
-   const det = rnd(-7, 7) + Math.sin(when * 1.3) * 6 - wind * 40;
+   const det = tuneAt(when, wind) + rnd(-2, 2);
    [[1, 1, 1.5], [4.01, .18, .35], [2, .25, .9]].forEach(([m, amp, dec]) => {
     const o = c.createOscillator(), g = c.createGain();
     o.type = "sine"; o.frequency.value = f * m; o.detune.value = det;
