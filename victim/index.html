@@ -766,10 +766,12 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const chB = [C_,C_,F_,C_, F_,C_,G_,C_, Am,Dm,C_,G_, G_,C_,G_,E_];
   const melC = [["E5",3],["C5",3],["B4",3],["A4",3]], chC = ["A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4"];
   const song = [];
-  melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 1, org: false }));
-  melB.forEach((m, k) => song.push({ m, c: chB[k], oct: 1, org: true }));
-  melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 2, org: true }));
-  melC.forEach((m, k) => song.push({ m, c: chC[k], oct: 1, org: true }));
+  melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 1, org: false, sec: "A" }));
+  melB.forEach((m, k) => song.push({ m, c: chB[k], oct: 1, org: true, sec: "B" }));
+  melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 2, org: true, sec: "H", k }));
+  melC.forEach((m, k) => song.push({ m, c: chC[k], oct: 1, org: true, sec: "C" }));
+  // A' 하이라이트: 구간 안에서 점점 커짐 (0.9 → 1.35)
+  const lift = bar => bar.sec === "H" ? .9 + .45 * Math.min(1, bar.k / 12) : 1;
   const BARS = song.length, total = BARS * 3, SLOW = (BARS - 4) * 3, WIND = 12;
   const windOf = x => Math.max(0, (x - SLOW) / WIND);
   const ev = [], melN = [];
@@ -777,7 +779,8 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    let at = b * 3;
    for (let i = 0; i < bar.m.length; i += 2){
     const f = N(bar.m[i]) * bar.oct;
-    ev.push([at, f, bar.oct > 1 ? .085 : .11]);
+    if (bar.sec === "H"){ ev.push([at, f, .08 * lift(bar)], [at, f / 2, .075 * lift(bar)]); }
+    else ev.push([at, f, .11]);
     if (b < BARS - 4) melN.push([at, bar.m[i + 1], N(bar.m[i])]);
     at += bar.m[i + 1];
    }
@@ -787,7 +790,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     const prev = song[b - 1];
     if (!(prev && prev.org && prev.c === bar.c)){
      let len = 3; for (let k = b + 1; k < BARS && song[k].org && song[k].c === bar.c; k++) len += 3;
-     ev.push([b * 3, 0, 0, "org", [bs, c1, c2].map(N), len]);
+     const fs = [bs, c1, c2].map(N);
+     if (bar.sec === "H") fs.push(N(c1) * 2, N(c2) * 2);
+     ev.push([b * 3, 0, bar.sec === "H" ? 1.35 * lift(bar) : 1, "org", fs, len]);
     }
    }
   });
@@ -797,9 +802,16 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   song.forEach((bar, b) => {
    if (b < 4 || b >= BARS - 1) return;
    if (b % 16 === 0) (b === 16 ? scMajor : scMinor).forEach((f, k) => ev.push([b * 3 - 1.4 + k * .09, f, .045 + k * .002, "harp"]));
-   let at = b * 3;
-   for (let i = 0; i < bar.m.length; i += 2){ const f = N(bar.m[i]) * bar.oct; ev.push([at, bar.oct > 1 ? f / 2 : f / 2, .05, "harp"]); at += bar.m[i + 1]; }
    const [bs, c1, c2] = bar.c.split(" ").map(N);
+   if (bar.sec === "H"){
+    // 하이라이트: 하프가 8분음표로 쉬지 않고 화음을 굴림 + 첫 박 종소리 + 낮은 북소리
+    [bs * 2, c1, c2, c1 * 2, c2, c1].forEach((f, k) => ev.push([b * 3 + k * .5, f, (k === 0 ? .055 : .042) * lift(bar), "harp"]));
+    ev.push([b * 3, 0, .55 * lift(bar), "thump"]);
+    if (bar.k % 4 === 0) ev.push([b * 3, c1 * 4, .03 * lift(bar), "chime"]);
+    return;
+   }
+   let at = b * 3;
+   for (let i = 0; i < bar.m.length; i += 2){ const f = N(bar.m[i]) * bar.oct; ev.push([at, f / 2, .05, "harp"]); at += bar.m[i + 1]; }
    [bs * 2, c1, c2].forEach((f, k) => ev.push([b * 3 + k * .06, f, .032, "harp"]));
   });
   ev.sort((a, b) => a[0] - b[0]);
@@ -830,10 +842,25 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    ng.gain.setValueAtTime(v * .5, when); ng.gain.exponentialRampToValueAtTime(0.0001, when + .03);
    s.connect(bp).connect(ng).connect(harpBus); s.start(when, Math.random()); s.stop(when + .05);
   }
-  function organ(when, freqs, dur, wind){
+  /* 하이라이트용: 낮은 북소리, 종소리 */
+  function thump(when, v){
+   const o = c.createOscillator(), g = c.createGain(); o.type = "sine";
+   o.frequency.setValueAtTime(92, when); o.frequency.exponentialRampToValueAtTime(48, when + .35);
+   g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v * .5, when + .006); g.gain.exponentialRampToValueAtTime(0.0001, when + .6);
+   o.connect(g).connect(A.master); const sd = c.createGain(); sd.gain.value = .5; g.connect(sd).connect(A.rev); o.start(when); o.stop(when + .7);
+  }
+  function chimeAt(when, f, v){
+   [[1, 1, 4], [2.76, .35, 2], [5.4, .12, 1]].forEach(([m, a, d]) => {
+    const o = c.createOscillator(), g = c.createGain(); o.type = "sine"; o.frequency.value = f * m;
+    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v * a, when + .005); g.gain.exponentialRampToValueAtTime(0.0001, when + d);
+    o.connect(g); g.connect(A.master); g.connect(A.rev); o.start(when); o.stop(when + d + .05);
+   });
+  }
+  function organ(when, freqs, dur, wind, amp){
+   amp = amp || 1;
    const g = c.createGain(); g.connect(orgBus);
-   g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(1, when + .45);
-   g.gain.setValueAtTime(1, when + Math.max(.5, dur - .5)); g.gain.exponentialRampToValueAtTime(0.0001, when + dur + .7);
+   g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(amp, when + .45);
+   g.gain.setValueAtTime(amp, when + Math.max(.5, dur - .5)); g.gain.exponentialRampToValueAtTime(0.0001, when + dur + .7);
    freqs.forEach((f0, k) => {
     const f = k === 0 ? f0 : f0;
     [[1, .022], [2, .013], [3, .007], [4, .005], [.5, k === 0 ? .016 : .006]].forEach(([m, a]) => {
@@ -983,8 +1010,10 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     if (when > now + .4) break;
     if (when > now){
      const wind = windOf(x), e = ev[idx];
-     if (e[3] === "org") organ(when, e[4], timeOf(x + e[5]) - timeOf(x), wind);
+     if (e[3] === "org") organ(when, e[4], timeOf(x + e[5]) - timeOf(x), wind, v);
      else if (e[3] === "harp") harp(when, f, v, wind);
+     else if (e[3] === "thump") thump(when, v);
+     else if (e[3] === "chime") chimeAt(when, f, v);
      else { pluck(when, f, v * (1 - wind * .35), wind); if (Math.random() < .25) clickT(when); }
     }
     idx++;
