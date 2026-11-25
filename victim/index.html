@@ -1195,16 +1195,16 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    if (i > 0) chs[i - 1].classList.remove("cur");
    if (i >= chs.length){
     const lastC = chs[chs.length - 1]; lastC.classList.add("cur");
-    setTimeout(() => { if (q.__run === run){ lastC.classList.remove("cur"); q.classList.remove("typing"); } }, 900);
+    setTimeout(() => { if (q.__run === run){ lastC.classList.remove("cur"); q.classList.remove("typing"); } }, 600);
     return;
    }
    const ch = chs[i]; ch.classList.add("on", "cur");
    if (A.started && ch.textContent.trim()) tick(rnd(2800, 3800));
    i++;
    const c = ch.textContent;
-   setTimeout(step, /[,.?!]/.test(c) ? rnd(260, 380) : c === " " ? rnd(40, 70) : rnd(55, 95));
+   setTimeout(step, /[,.?!]/.test(c) ? rnd(150, 220) : c === " " ? rnd(20, 40) : rnd(32, 55));
   };
-  setTimeout(step, 350);
+  setTimeout(step, 200);
  }
  const quotes = [...document.querySelectorAll(".quote q")];
  if (!calm.matches){
