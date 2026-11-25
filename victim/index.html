@@ -887,7 +887,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    });
   }
   (function ahemLoop(){
-   setTimeout(() => { if (A.started && c.currentTime > humBusy) ahem(); ahemLoop(); }, rnd(25000, 55000));
+   setTimeout(() => { if (HUM_ON && A.started && c.currentTime > humBusy) ahem(); ahemLoop(); }, rnd(25000, 55000));
   })();
   let humBusy = 0;
   // 사람 목소리에 가까운 성대 파형 (배음이 부드럽게 줄어듦)
