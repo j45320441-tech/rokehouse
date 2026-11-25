@@ -292,6 +292,27 @@ body.v-warn .snd{bottom:58px}
 .late.stampy{filter:none;transition:none;opacity:0}
 .late.stampy.shown{opacity:1;animation:stampIn .3s cubic-bezier(.5,0,.75,0) both}
 @keyframes stampIn{0%{opacity:0;transform:scale(2.6) rotate(-30deg)}72%{opacity:1;transform:scale(.93) rotate(-8deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+.tl-hint{font-size:13px;color:var(--dim);margin:-8px 0 26px}
+.tl{position:relative;padding:6px 0 10px;--x:160px}
+.tl::before{content:"";position:absolute;left:var(--x);top:0;bottom:0;width:3px;margin-left:-1px;background:repeating-linear-gradient(180deg,#fff 0 12px,transparent 12px 18px)}
+.tl::after{content:"";position:absolute;left:var(--x);bottom:-6px;width:11px;height:11px;margin-left:-5px;background:#fff;clip-path:polygon(50% 100%,0 0,100% 0)}
+.tl-it{position:relative;min-height:120px}
+.tl-pt{position:relative;display:flex;align-items:center;height:44px;width:calc(var(--x) + 22px);padding:0;text-align:right;cursor:pointer}
+.tl-pt .yr{width:calc(var(--x) - 30px);font-size:clamp(20px,2.2vw,26px);font-weight:700;line-height:1;white-space:nowrap}
+.tl-pt .yr small{font-size:.55em;color:var(--dim);margin-left:2px}
+.tl-pt .dot{position:absolute;left:var(--x);top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;background:#000;border:3px solid #fff;transition:transform .15s,background .15s}
+.tl-pt:hover .dot,.tl-pt:focus-visible .dot{transform:scale(1.25)}
+.tl-pt[aria-expanded=true] .dot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 6px rgba(227,18,27,.25);animation:pulse 1s steps(2) infinite}
+.tl-pt[aria-expanded=true] .yr{color:var(--red)}
+.tl-pt[aria-expanded=true] .yr small{color:var(--red)}
+.tl-bub{position:absolute;z-index:5;left:calc(var(--x) + 34px);top:-10px;width:min(520px,calc(100% - var(--x) - 40px));background:#000;border:2px solid #fff;padding:14px 18px;font-size:clamp(15px,1.5vw,17px);line-height:1.75;box-shadow:6px 6px 0 rgba(255,255,255,.12)}
+.tl-bub::before{content:"";position:absolute;left:-14px;top:20px;width:14px;height:20px;background:#fff;clip-path:polygon(100% 0,0 50%,100% 100%)}
+.tl-bub::after{content:"";position:absolute;left:-10px;top:23px;width:11px;height:14px;background:#000;clip-path:polygon(100% 0,0 50%,100% 100%)}
+.tl-bub p{margin:0}
+.tl-bub b{display:inline-block;margin-top:6px}
+.tl-bub.pop{animation:pop .22s steps(3)}
+@keyframes pop{0%{opacity:0;transform:translateX(-10px) scale(.92)}50%{opacity:1;transform:translateX(3px)}100%{transform:none}}
+@media(max-width:600px){.tl{--x:112px}.tl-pt .yr{font-size:18px}.tl-bub{left:calc(var(--x) + 26px);width:calc(100% - var(--x) - 28px);padding:10px 12px}.tl-it{min-height:110px}}
 @media(max-width:820px){
  .hero,.cls,.case,.ph,.pb,.org-card{grid-template-columns:minmax(0,1fr)}
  .who{max-width:190px}
@@ -379,12 +400,15 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
 
   <section class="sec">
    <h2>발견 기록</h2>
-   <ol class="log">
-    <li><time>2072. 03</time><span>미국 <span class="red" title="검열됨">■■■■</span>주에서 최초 발견.<br>식물 혹은 곤충의 특징이 있는 인간의 외형. 주로 특징은 머리에 들어남.</span></li>
-    <li><time>2072. 09</time><span>자신들을 우성종이라 소개하며 인류 지배 욕구 보임.</span></li>
-    <li><time>2073. 01</time><span>화기류로 사냥 유무 최초 확인됨.</span></li>
-    <li class="org"><time>2073. 01</time><span>우성종 사냥 전문 회사 V.I.C.T.I.M 설립.</span></li>
-   </ol>
+   <p class="tl-hint">■ 연도를 눌러 기록을 열람하십시오.</p>
+   <div class="tl" id="tl">
+    <div class="tl-it"><button class="tl-pt" aria-expanded="false" aria-controls="tb0"><span class="yr">2072<small>.03</small></span><i class="dot"></i></button>
+     <div class="tl-bub" id="tb0" hidden><p>미국 <span class="red" title="검열됨">■■■■</span>주에서 최초 발견.<br>식물 혹은 곤충의 특징이 있는 인간의 외형. 주로 특징은 머리에 들어남.</p></div></div>
+    <div class="tl-it"><button class="tl-pt" aria-expanded="false" aria-controls="tb1"><span class="yr">2072<small>.09</small></span><i class="dot"></i></button>
+     <div class="tl-bub" id="tb1" hidden><p>자신들을 우성종이라 소개하며 인류 지배 욕구 보임.</p></div></div>
+    <div class="tl-it"><button class="tl-pt" aria-expanded="false" aria-controls="tb2"><span class="yr">2073<small>.01</small></span><i class="dot"></i></button>
+     <div class="tl-bub" id="tb2" hidden><p>화기류로 사냥 유무 최초 확인됨.<br><b class="r">우성종 사냥 전문 회사 V.I.C.T.I.M 설립.</b></p></div></div>
+   </div>
   </section>
 
   <div class="divider" aria-hidden="true"><svg class="ico"><use href="#flw"/></svg></div>
@@ -1146,6 +1170,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   who.classList.remove("torn", "ripping");
   seal.classList.remove("on"); seal.style.opacity = ""; seal.style.transform = ""; card.classList.remove("hit");
   if (!calm.matches) quotes.forEach(prepQuote);
+  tlClose();
   document.querySelectorAll(".late").forEach(el => { el.classList.add("reset"); el.classList.remove("revealing", "shown"); if (el.classList.contains("type-in")) prepType(el); void el.offsetWidth; el.classList.remove("reset"); });
   armFx();
  };
@@ -1215,8 +1240,8 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    const ch = chs[i]; ch.classList.add("on", "cur");
    if (A.started && ch.textContent.trim()) tick(rnd(2800, 3800));
    i++;
-   const c = ch.textContent;
-   setTimeout(step, /[,.?!]/.test(c) ? rnd(150, 220) : c === " " ? rnd(20, 40) : rnd(32, 55));
+   const c = ch.textContent, nx = chs[i] ? chs[i].textContent : " ";
+   setTimeout(step, /[,.?!]/.test(c) && /\s/.test(nx) ? rnd(150, 220) : c === " " ? rnd(20, 40) : rnd(32, 55));
   };
   step();
  }
@@ -1253,6 +1278,26 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    if (r.top < innerHeight - 50 && r.bottom > 0) typeQuote(q);
   }), 120);
  }
+
+ /* 발견 기록 타임라인: 연도점 클릭 → 말풍선 */
+ const tlPts = [...document.querySelectorAll(".tl-pt")];
+ function tlClose(except){
+  tlPts.forEach(b => { if (b === except) return; b.setAttribute("aria-expanded", "false"); const bub = document.getElementById(b.getAttribute("aria-controls")); bub.hidden = true; });
+ }
+ tlPts.forEach(b => b.addEventListener("click", e => {
+  e.stopPropagation();
+  const bub = document.getElementById(b.getAttribute("aria-controls"));
+  const open = b.getAttribute("aria-expanded") === "true";
+  tlClose(b);
+  if (open){ b.setAttribute("aria-expanded", "false"); bub.hidden = true; return; }
+  b.setAttribute("aria-expanded", "true"); bub.hidden = false;
+  bub.classList.remove("pop"); void bub.offsetWidth; bub.classList.add("pop");
+  if (A.started) sfxBeep(1500, .03, .03);
+  const p = bub.querySelector("p");
+  if (!calm.matches){ prepType(p); setTimeout(() => typeEl(p), 120); }
+ }));
+ document.addEventListener("click", e => { if (!e.target.closest(".tl-bub")) tlClose(); });
+ document.addEventListener("keydown", e => { if (e.key === "Escape") tlClose(); });
 
  /* 조준점 이동 */
  document.querySelectorAll(".vf .aim").forEach(a => {
