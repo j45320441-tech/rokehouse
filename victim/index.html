@@ -960,7 +960,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    s.connect(lp).connect(g); g.connect(A.master); const sd = c.createGain(); sd.gain.value = .7; g.connect(sd).connect(A.rev);
    s.start(when); humBusy = Math.max(humBusy, when + dur);
   }
+  const HUM_ON = false; // 허밍 끔 (다시 켜려면 true)
   function scheduleHums(ls){
+   if (!HUM_ON) return;
    if (A.humBuf){
     if (Math.random() < .6 || ++humSkip > 1){ humSkip = 0; playVoice(ls + timeOf(rnd(0, 14)) + rnd(.1, .4)); }
     return;
