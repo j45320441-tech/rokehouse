@@ -764,11 +764,18 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    ["G5",1,"A5",1,"B5",1],["C6",2,"E5",1],["D5",1,"G5",1,"F5",1],["E5",3]];
   const C_ = "C3 E3 G3", F_ = "F2 A3 C4", G_ = "G2 B3 D4", Am = "A2 C4 E4", Dm = "D3 F3 A3", E_ = "E2 G#3 B3";
   const chB = [C_,C_,F_,C_, F_,C_,G_,C_, Am,Dm,C_,G_, G_,C_,G_,E_];
+  // A': 같은 A단조지만 새 변주 (8분음표로 달리는 선율, 더 높은 음역, 다른 화음 진행)
+  const melH = [
+   ["E5",.5,"A5",.5,"C6",1,"B5",.5,"A5",.5],["A5",1.5,"G5",.5,"F5",1],["E5",.5,"G5",.5,"C6",1,"B5",.5,"C6",.5],["D6",2,"B5",1],
+   ["C6",.5,"B5",.5,"A5",1,"E5",1],["F5",.5,"A5",.5,"D6",1,"C6",.5,"A5",.5],["B5",1,"G#5",1,"E5",1],["A5",3],
+   ["A5",.5,"C6",.5,"F6",1,"E6",.5,"C6",.5],["D6",1.5,"B5",.5,"G5",1],["E6",.5,"D6",.5,"C6",1,"G5",1],["A5",1.5,"B5",.5,"C6",1],
+   ["D6",.5,"C6",.5,"A5",1,"F5",1],["G#5",.5,"A5",.5,"B5",1,"E6",1],["D6",.5,"C6",.5,"B5",.5,"A5",.5,"G#5",1],["A5",3]];
+  const chH = [Am,F_,C_,G_, Am,Dm,E_,Am, F_,G_,C_,Am, Dm,E_,E_,Am];
   const melC = [["E5",3],["C5",3],["B4",3],["A4",3]], chC = ["A2 C4 E4","F2 A3 C4","E2 G#3 B3","A2 C4 E4"];
   const song = [];
   melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 1, org: false, sec: "A" }));
   melB.forEach((m, k) => song.push({ m, c: chB[k], oct: 1, org: true, sec: "B" }));
-  melA.forEach((m, k) => song.push({ m, c: chA[k], oct: 2, org: true, sec: "H", k }));
+  melH.forEach((m, k) => song.push({ m, c: chH[k], oct: 1, org: true, sec: "H", k }));
   melC.forEach((m, k) => song.push({ m, c: chC[k], oct: 1, org: true, sec: "C" }));
   // A' 하이라이트: 구간 안에서 점점 커짐 (0.9 → 1.35)
   const lift = bar => bar.sec === "H" ? .9 + .45 * Math.min(1, bar.k / 12) : 1;
@@ -779,7 +786,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    let at = b * 3;
    for (let i = 0; i < bar.m.length; i += 2){
     const f = N(bar.m[i]) * bar.oct;
-    if (bar.sec === "H"){ ev.push([at, f, .08 * lift(bar)], [at, f / 2, .075 * lift(bar)]); }
+    if (bar.sec === "H"){ ev.push([at, f, .075 * lift(bar)], [at, f / 2, .07 * lift(bar)]); }
     else ev.push([at, f, .11]);
     if (b < BARS - 4) melN.push([at, bar.m[i + 1], N(bar.m[i])]);
     at += bar.m[i + 1];
@@ -815,9 +822,15 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    [bs * 2, c1, c2].forEach((f, k) => ev.push([b * 3 + k * .06, f, .032, "harp"]));
   });
   ev.sort((a, b) => a[0] - b[0]);
-  const beat0 = 60 / 66;
-  // 박자 → 시간 (마지막 네 마디는 태엽이 풀리듯 느려짐)
-  const timeOf = x => { if (x <= SLOW) return x * beat0; const y = x - SLOW; return SLOW * beat0 + beat0 * (y + y * y * .045); };
+  // 마디별 템포: A·B 66 → B 끝에서 빨라짐 → A' 86 → 마무리에서 태엽 풀리듯 느려짐
+  const bpm = song.map((bar, b) => {
+   if (bar.sec === "H") return 86;
+   if (bar.sec === "B" && b >= 30) return b === 30 ? 72 : 79;
+   if (bar.sec === "C") return [70, 62, 54, 46][b - (BARS - 4)];
+   return 66;
+  });
+  const cum = [0]; bpm.forEach((v, b) => cum.push(cum[b] + 3 * 60 / v));
+  const timeOf = x => { const b = Math.max(0, Math.min(BARS - 1, Math.floor(x / 3))); return cum[b] + (x - b * 3) * 60 / bpm[b]; };
   const loopLen = timeOf(total) + 3;
   /* 오르간: 낡은 파이프 오르간 느낌 (배음 여러 겹 + 떨림) */
   const orgBus = c.createGain(); orgBus.gain.value = .6;
