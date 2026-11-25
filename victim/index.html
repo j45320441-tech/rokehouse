@@ -282,6 +282,7 @@ th{font-size:16px}
 .snd:hover{background:#fff;color:#000}
 body.v-boot .snd{display:none}
 body.v-warn .snd{bottom:58px}
+.pb:not(:has(.memo:not([hidden]))){grid-template-columns:minmax(0,1fr)}
 @media(max-width:820px){
  .hero,.cls,.case,.ph,.pb,.org-card{grid-template-columns:minmax(0,1fr)}
  .who{max-width:190px}
@@ -453,7 +454,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
      <h2 class="rank">3조 A팀 팀장</h2>
      <dl class="stats"><dt>이름</dt><dd>Seine du Lac</dd><dt>성별</dt><dd>F</dd><dt>몸</dt><dd>160.4cm/49kg</dd></dl>
     </div>
-    <aside class="memo">
+    <aside class="memo" hidden>
      <svg viewBox="0 0 40 110" aria-hidden="true"><path d="M12 100V22a8 8 0 0 1 16 0v66a5 5 0 0 1-10 0V30" fill="none" stroke="#ddd" stroke-width="3.5" stroke-linecap="round"/></svg>
      <h4>특이사항</h4>
      <p>· <span class="r">범죄자</span> 출신</p>
@@ -473,7 +474,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
      <h2 class="rank">3조 A팀 신입</h2>
      <dl class="stats"><dt>이름</dt><dd>불명 / 센이 초짜라며 임시로 루키라 하자고 함.</dd><dt>성별</dt><dd>F<span class="r">...?</span></dd><dt>몸</dt><dd>150cm/38kg</dd></dl>
     </div>
-    <aside class="memo">
+    <aside class="memo" hidden>
      <svg viewBox="0 0 40 110" aria-hidden="true"><path d="M12 100V22a8 8 0 0 1 16 0v66a5 5 0 0 1-10 0V30" fill="none" stroke="#ddd" stroke-width="3.5" stroke-linecap="round"/></svg>
      <h4>특이사항</h4>
      <p>자신이 <span class="r">남성의<br>목소리</span>를 낼 수 있다 주장</p>
