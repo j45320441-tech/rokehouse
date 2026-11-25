@@ -352,6 +352,30 @@ body.v-warn .snd{bottom:58px}
 .plg i{width:14px;height:14px;display:inline-block;background:#fff}
 .plg i.k-c{background:#6a6a6a}.plg i.k-a{background:var(--red)}
 .plg .cap{display:block;margin:14px 0 0}
+.pick .prof,.pick .tabs{display:none!important}
+#characters:not(.pick) .dossiers{display:none}
+.dossiers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,2.5vw,28px);margin-top:8px}
+.dos{position:relative;display:block;height:min(62vh,480px);min-height:340px;border:2px solid #fff;background:#000;overflow:hidden;padding:0;text-align:left}
+.dos .sil{position:absolute;inset:0}
+.dos .sil img{width:100%;height:100%;object-fit:cover;object-position:50% 25%;filter:grayscale(1) brightness(.13) contrast(1.3);transition:filter .3s,transform .4s;-webkit-mask:linear-gradient(#000 55%,transparent);mask:linear-gradient(#000 55%,transparent)}
+.dos:hover .sil img,.dos:focus-visible .sil img{filter:grayscale(1) brightness(.2) contrast(1.4);transform:scale(1.03)}
+.dos .dmeta{position:absolute;left:20px;right:20px;bottom:18px;display:flex;flex-direction:column;gap:6px}
+.dos .dmeta .px{font-size:12px;color:var(--red)}
+.dos .dmeta b{font-size:clamp(22px,2.6vw,30px);line-height:1.2}
+.dos .nm{font-size:14px;color:var(--dim)}
+.redbar{display:inline-block;width:5em;height:.9em;background:#fff;vertical-align:-.1em}
+.dos .go{margin-top:6px;font-size:14px;align-self:flex-start;border:1px solid #fff;padding:4px 12px}
+.dos:hover .go,.dos:focus-visible .go{background:#fff;color:#000}
+.dos .scan{position:absolute;left:0;right:0;top:-10%;height:8%;background:linear-gradient(transparent,rgba(227,18,27,.55),transparent);opacity:0;pointer-events:none}
+.dos.open .scan{opacity:1;animation:scan .6s linear}
+@keyframes scan{to{top:105%}}
+.dos .ok{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);color:var(--red);border:2px solid var(--red);background:#000;padding:6px 14px;font-size:14px;white-space:nowrap;opacity:0}
+.dos.open .ok{animation:okf .7s steps(1) .45s both}
+@keyframes okf{0%,40%,80%{opacity:1}20%,60%{opacity:0}100%{opacity:1}}
+.dos.open{border-color:var(--red)}
+.tabs .back{border:2px solid var(--dim)!important;color:var(--dim)}
+.tabs .back:hover{color:#fff;border-color:#fff!important}
+@media(max-width:600px){.dossiers{grid-template-columns:minmax(0,1fr)}.dos{height:300px;min-height:0}}
 @media(max-width:820px){
  .cards{grid-template-columns:minmax(0,1fr)}
  .gcard{height:190px}
@@ -531,10 +555,20 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
 </main>
 
 <!-- 5. 캐릭터 -->
-<main id="characters" class="view">
+<main id="characters" class="view pick">
  <div class="wrap">
   <div class="meta"><span class="px">DOC No. VT-HR-3A</span><span>인사 기록 · 3조 A팀</span><span>보안 등급 <b>C</b></span><span class="bars">▮▮▮▯▯</span></div>
+  <div class="dossiers" id="dossiers">
+   <p class="tl-hint" style="grid-column:1/-1;margin:0">■ 열람할 인사 파일을 선택하십시오.</p>
+   <button class="dos" data-p="p-seine"><span class="sil"><img data-from="#p-seine .cimg img" alt=""></span>
+    <span class="dmeta"><span class="px">FILE 3A-01</span><b>3조 A팀 팀장</b><span class="nm">이름: <i class="redbar"></i></span><span class="go">▶ 파일 열람</span></span>
+    <span class="scan" aria-hidden="true"></span><span class="ok px">ACCESS GRANTED</span></button>
+   <button class="dos" data-p="p-lukira"><span class="sil"><img data-from="#p-lukira .cimg img" alt=""></span>
+    <span class="dmeta"><span class="px">FILE 3A-02</span><b>3조 A팀 신입</b><span class="nm">이름: <i class="redbar"></i></span><span class="go">▶ 파일 열람</span></span>
+    <span class="scan" aria-hidden="true"></span><span class="ok px">ACCESS GRANTED</span></button>
+  </div>
   <div class="tabs" role="tablist" aria-label="캐릭터">
+   <button class="back" id="dosBack">← 파일 목록</button>
    <button role="tab" aria-selected="true" data-p="p-seine" id="t-seine">센 · 팀장</button>
    <button role="tab" aria-selected="false" data-p="p-lukira" id="t-lukira">■■■ · 신입</button>
   </div>
@@ -952,7 +986,8 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  function route(){
   let h = location.hash.slice(1);
   if (h === "title"){ title(); return; }
-  if (h === "seine" || h === "lukira"){ pick("p-" + h); h = "characters"; }
+  if (h === "seine" || h === "lukira"){ pick("p-" + h); $("#characters").classList.remove("pick"); h = "characters"; }
+  else if (h === "characters") $("#characters").classList.add("pick");
   show(views.includes(h) ? h : "files");
  }
 
@@ -1125,6 +1160,23 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   document.querySelectorAll(".prof").forEach(p => p.classList.toggle("on", p.id === pid));
  }
  document.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => pick(b.dataset.p)));
+ /* 인사 파일 선택 화면 */
+ const chv = $("#characters");
+ document.querySelectorAll(".dos img[data-from]").forEach(im => { const s = document.querySelector(im.dataset.from); if (s) im.src = s.src; });
+ function enterProfile(pid){ chv.classList.remove("pick"); pick(pid); window.scrollTo(0, 0); }
+ function toPick(){ chv.classList.add("pick"); document.querySelectorAll(".dos").forEach(d => d.classList.remove("open")); }
+ let dosBusy = false;
+ document.querySelectorAll(".dos").forEach(d => d.addEventListener("click", () => {
+  if (dosBusy) return;
+  if (calm.matches){ enterProfile(d.dataset.p); return; }
+  dosBusy = true; d.classList.add("open");
+  if (A.started){ [0, 90, 180].forEach(x => setTimeout(() => sfxBeep(1400 + x * 2, .03, .035), x)); setTimeout(() => sfxBeep(2200, .12, .04), 520); }
+  setTimeout(() => {
+   burst(180, true);
+   setTimeout(() => { enterProfile(d.dataset.p); chv.classList.remove("flick"); void chv.offsetWidth; chv.classList.add("flick"); dosBusy = false; }, 120);
+  }, 1050);
+ }));
+ $("#dosBack").addEventListener("click", () => { toPick(); if (location.hash !== "#characters") location.hash = "characters"; });
  document.querySelector("[role=tablist]").addEventListener("keydown", e => {
   if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
   const tabs = [...document.querySelectorAll("[role=tab]")];
