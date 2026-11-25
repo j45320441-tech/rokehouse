@@ -790,18 +790,46 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     }
    }
   });
+  // 하프: 4마디 이후 두 마디마다 화음을 위로 굴려 연주, 구간이 바뀔 때는 글리산도
+  song.forEach((bar, b) => {
+   if (b < 4 || b >= BARS - 1) return;
+   const [bs, c1, c2] = bar.c.split(" ").map(N);
+   if (b % 16 === 0){
+    const sc = ["A3","B3","C4","D4","E4","F4","G#4","A4","B4","C5","D5","E5","F5","G#5","A5"].map(N);
+    sc.forEach((f, k) => ev.push([b * 3 - 1.4 + k * .09, f, .05 + k * .002, "harp"]));
+   }
+   if (b % 2 === 0){
+    [bs * 2, c1, c2, c1 * 2, c2 * 2, c1 * 4].forEach((f, k) => ev.push([b * 3 + k * .2, f, .055 - k * .004, "harp"]));
+   }
+  });
   ev.sort((a, b) => a[0] - b[0]);
   const beat0 = 60 / 66;
   // 박자 → 시간 (마지막 네 마디는 태엽이 풀리듯 느려짐)
   const timeOf = x => { if (x <= SLOW) return x * beat0; const y = x - SLOW; return SLOW * beat0 + beat0 * (y + y * y * .045); };
   const loopLen = timeOf(total) + 3;
   /* 오르간: 낡은 파이프 오르간 느낌 (배음 여러 겹 + 떨림) */
-  const orgBus = c.createGain(); orgBus.gain.value = .9;
+  const orgBus = c.createGain(); orgBus.gain.value = .6;
   const orgLp = c.createBiquadFilter(); orgLp.type = "lowpass"; orgLp.frequency.value = 2200;
   const trem = c.createGain(); trem.gain.value = 1;
   const tl = c.createOscillator(), tg = c.createGain(); tl.frequency.value = 5.2; tg.gain.value = .18; tl.connect(tg).connect(trem.gain); tl.start();
   orgBus.connect(orgLp).connect(trem); trem.connect(A.master);
   const osend = c.createGain(); osend.gain.value = .8; trem.connect(osend).connect(A.rev);
+  /* 하프: 손으로 뜯는 현 소리 */
+  const harpBus = c.createGain(); harpBus.gain.value = 1;
+  const hlp = c.createBiquadFilter(); hlp.type = "lowpass"; hlp.frequency.value = 4200;
+  harpBus.connect(hlp).connect(A.master); const hsend = c.createGain(); hsend.gain.value = .7; hlp.connect(hsend).connect(A.rev);
+  function harp(when, f, v, wind){
+   const det = rnd(-5, 5) - wind * 40;
+   [[1, 1, 2.8], [2.003, .45, 1.6], [3.01, .22, .9], [4.02, .1, .55], [5.03, .05, .35]].forEach(([m, a, dec]) => {
+    const o = c.createOscillator(), g = c.createGain(); o.type = m === 1 ? "triangle" : "sine"; o.frequency.value = f * m; o.detune.value = det;
+    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v * a, when + .003); g.gain.exponentialRampToValueAtTime(0.0001, when + dec);
+    o.connect(g).connect(harpBus); o.start(when); o.stop(when + dec + .05);
+   });
+   const s = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain();
+   s.buffer = A.noise; bp.type = "bandpass"; bp.frequency.value = Math.min(6000, f * 4); bp.Q.value = 2;
+   ng.gain.setValueAtTime(v * .5, when); ng.gain.exponentialRampToValueAtTime(0.0001, when + .03);
+   s.connect(bp).connect(ng).connect(harpBus); s.start(when, Math.random()); s.stop(when + .05);
+  }
   function organ(when, freqs, dur, wind){
    const g = c.createGain(); g.connect(orgBus);
    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(1, when + .45);
@@ -953,6 +981,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
     if (when > now){
      const wind = windOf(x), e = ev[idx];
      if (e[3] === "org") organ(when, e[4], timeOf(x + e[5]) - timeOf(x), wind);
+     else if (e[3] === "harp") harp(when, f, v, wind);
      else { pluck(when, f, v * (1 - wind * .35), wind); if (Math.random() < .25) clickT(when); }
     }
     idx++;
