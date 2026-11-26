@@ -98,7 +98,9 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;bac
 /* hub */
 .hubtitle{width:min(860px,100%);margin:clamp(24px,6vh,80px) 0 0}
 .rule{height:4px;background:#fff;margin:clamp(28px,5vh,56px) 0}
-.folders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(28px,6vw,90px) clamp(20px,8vw,140px);max-width:820px;margin:0 auto}
+.folders{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(28px,5vw,64px) clamp(20px,5vw,72px);max-width:1000px;margin:0 auto}
+.folders .folder{flex:0 1 260px}
+.fpin{position:absolute;z-index:2;right:16%;top:10%;width:30px;height:40px;fill:var(--red);filter:drop-shadow(2px 2px 0 rgba(0,0,0,.4));animation:pulse 1.4s steps(2) infinite}
 .folder{display:block;text-align:center;color:#fff;text-decoration:none;position:relative}
 .fold{position:relative;aspect-ratio:1.33;margin:0 auto 18px;width:100%;max-width:310px;transition:transform .2s}
 .fold::before{content:"";position:absolute;left:0;top:0;width:38%;height:22%;background:#e9e9e9;border-radius:16px 16px 0 0;clip-path:polygon(0 0,70% 0,100% 60%,100% 100%,0 100%)}
@@ -434,6 +436,38 @@ body.v-warn .snd{bottom:58px}
 .tr-staple::before{content:"";position:absolute;left:16px;top:18px;width:34px;height:8px;border:2px solid #b5b5b5;border-bottom:0;transform:rotate(-14deg)}
 .tr-staple::after{content:"";position:absolute;left:10px;top:24px;width:46px;height:3px;background:rgba(255,255,255,.12);transform:rotate(-14deg)}
 
+.mstage{margin-top:4px}
+.mhead .mt{font-size:clamp(28px,4vw,44px);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.mhead .mt small{font-size:13px;color:var(--red);font-weight:400}
+.mhead .tl-hint{margin:10px 0 18px}
+.mctrl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px}
+.mbtn{border:2px solid #fff;padding:6px 14px;min-height:40px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px}
+.mbtn:hover{background:#fff;color:#000}
+.mbtn[aria-pressed=false]{border-color:#555;color:#666}
+.gflt{display:flex;gap:8px;flex-wrap:wrap}
+.lg{width:12px;height:12px;display:inline-block;background:#fff}.lg.c{background:#777}.lg.a{background:var(--red)}
+#mRange{flex:1;min-width:160px;accent-color:#e3121b}
+#mDate{font-size:16px;color:var(--red);min-width:5.5em}
+.mscroll{overflow-x:auto;border:2px solid #fff;background:#050505}
+.mbox{position:relative;min-width:640px}
+.mbox svg{display:block;width:100%;height:auto;shape-rendering:crispEdges}
+.mbox .zoomout{transition:transform .9s cubic-bezier(.6,0,.4,1),opacity .9s}
+.mbub{position:absolute;z-index:6;width:min(280px,70%);background:#000;border:2px solid #fff;padding:12px 14px;font-size:14px;line-height:1.6;box-shadow:5px 5px 0 rgba(255,255,255,.12);transform:translate(-50%,calc(-100% - 16px))}
+.mbub.below{transform:translate(-50%,16px)}
+.mbub b{display:block;font-size:16px}
+.mbub .gr{display:inline-block;font-size:12px;padding:0 6px;margin-right:6px;border:1px solid #fff}
+.mbub .gr.a{border-color:var(--red);color:var(--red)}
+.mbub .gr.c{border-color:#888;color:#aaa}
+.mbub .st{color:var(--dim)}
+.mbub .go{display:inline-block;margin-top:8px;border:1px solid var(--red);color:var(--red);padding:2px 10px;font-weight:700}
+.mbub .go:hover{background:var(--red);color:#fff}
+.mk-pt{cursor:pointer}
+.mk-pt .ring{animation:mring 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes mring{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(2.4)}}
+.mk-pt.off{display:none}
+.mk-pt:hover .core,.mk-pt:focus .core{stroke:#fff;stroke-width:.3}
+.mk-pt.sel .core{stroke:#fff;stroke-width:.4}
+#wCount{margin-top:10px}
 @media(max-width:820px){
  .cards{grid-template-columns:minmax(0,1fr)}
  .gcard{height:190px}
@@ -453,6 +487,7 @@ body.v-warn .snd{bottom:58px}
 @media(max-width:600px){
  .seal{width:112px;bottom:-62px;right:6px}.seal b{font-size:19px}.seal small,.seal .px{font-size:10px}
  .folders{gap:36px 18px}
+ .folders .folder{flex-basis:42%}
  table{font-size:13px}th,td{padding:6px 3px}
  .log li{grid-template-columns:minmax(0,1fr);gap:2px}
  .top nav{width:100%;overflow-x:auto;flex-wrap:nowrap}
@@ -495,7 +530,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
 <header class="top" id="top" hidden>
  <a href="#files" class="crumb">V.I.C.T.I.M <span id="crumb">/ 내부 문서</span></a>
  <nav>
-  <a href="#world">세계관</a><a href="#characters">캐릭터</a><a href="#classified">기밀문서</a><a href="#webtoon">웹툰</a>
+  <a href="#world">세계관</a><a href="#characters">캐릭터</a><a href="#map">출몰 지도</a><a href="#classified">기밀문서</a><a href="#webtoon">웹툰</a>
  </nav>
 </header>
 
@@ -508,6 +543,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   <div class="folders">
    <a class="folder" href="#world"><div class="fold"></div><b>세계관</b><small>우성종 · V.I.C.T.I.M</small></a>
    <a class="folder" href="#characters"><div class="fold"></div><b>캐릭터</b><small>3조 A팀</small></a>
+   <a class="folder" href="#map"><div class="fold"></div><svg class="fpin" viewBox="0 0 12 16" aria-hidden="true"><path d="M3 0h6v1h1v1h1v5h-1v2H9v2H8v2H7v2H5v-2H4v-2H3V9H2V7H1V2h1V1h1zM5 3v3h2V3z"/></svg><b>출몰 지도</b><small>WORLD · ■■시</small></a>
    <a class="folder" href="#classified"><div class="fold"></div><div class="tape" aria-hidden="true"></div><span class="stamp-r" style="right:6%;top:8%;font-size:16px">열람 제한</span><b>기밀문서</b><small>열람 제한</small></a>
    <a class="folder" href="#webtoon"><div class="fold"></div><b>웹툰</b><small>준비 중</small></a>
   </div>
@@ -717,6 +753,52 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  </div>
 </main>
 
+<!-- 8. 출몰 지도 -->
+<main id="map" class="view">
+ <div class="wrap">
+  <div class="meta"><span class="px">DOC No. VT-MP-001</span><span>우성종 출몰 기록</span><span>보안 등급 <b>B</b></span><span class="bars">▮▮▮▮▯</span></div>
+
+  <section id="mWorld" class="mstage">
+   <div class="mhead">
+    <h1 class="mt">출몰 지도 <small class="px">WORLD</small></h1>
+    <p class="tl-hint">■ 지점을 눌러 기록을 열람하십시오. <span class="r">◉</span> 표시를 누르면 관할 도시로 확대됩니다.</p>
+   </div>
+   <div class="mctrl">
+    <button class="mbtn" id="mPlay">▶ 확산 재생</button>
+    <input type="range" id="mRange" min="0" max="12" value="12" aria-label="날짜">
+    <output id="mDate" class="px">2073.03</output>
+   </div>
+   <div class="mscroll"><div class="mbox" id="wBox">
+    <svg id="wSvg" viewBox="0 0 72 27" preserveAspectRatio="xMidYMid meet" aria-label="세계 출몰 지도"></svg>
+    <div class="mbub" id="wBub" hidden></div>
+   </div></div>
+   <p class="cap" id="wCount"></p>
+  </section>
+
+  <section id="mCity" class="mstage" hidden>
+   <div class="mhead">
+    <h1 class="mt"><span class="red" style="width:2.4em" title="검열됨">■■</span>시 작전 구역 <small class="px">V.I.C.T.I.M 관할</small></h1>
+    <p class="tl-hint">■ 지점을 눌러 기록을 열람하십시오. <span class="r">붉은 점선</span> = 3조 관할 구역</p>
+   </div>
+   <div class="mctrl">
+    <button class="mbtn" id="mBack">← 세계 지도</button>
+    <span class="gflt">
+     <button class="mbtn on" data-g="하급" aria-pressed="true"><i class="lg c"></i>하급</button>
+     <button class="mbtn on" data-g="중급" aria-pressed="true"><i class="lg b"></i>중급</button>
+     <button class="mbtn on" data-g="상급" aria-pressed="true"><i class="lg a"></i>상급</button>
+    </span>
+   </div>
+   <div class="mscroll"><div class="mbox" id="cBox">
+    <svg id="cSvg" viewBox="0 0 40 26" preserveAspectRatio="xMidYMid meet" aria-label="도시 작전 구역 지도"></svg>
+    <div class="mbub" id="cBub" hidden></div>
+   </div></div>
+   <p class="cap">※ 출몰 기록은 임시 작성된 예시입니다.</p>
+  </section>
+
+  <div class="foot"><a href="#files" style="color:inherit">← 내부 문서로</a><span>무단 반출 금지</span></div>
+ </div>
+</main>
+
 <!-- 7. 웹툰 -->
 <main id="webtoon" class="view">
  <div class="wrap">
@@ -740,8 +822,8 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  const PASSWORD = "";
 
  const $ = s => document.querySelector(s);
- const views = ["files","world","characters","classified","webtoon"];
- const names = {files:"내부 문서",world:"세계관",characters:"캐릭터",classified:"기밀문서",webtoon:"웹툰"};
+ const views = ["files","world","characters","map","classified","webtoon"];
+ const names = {files:"내부 문서",world:"세계관",map:"출몰 지도",characters:"캐릭터",classified:"기밀문서",webtoon:"웹툰"};
  const top = $("#top");
 
  /* ===== 사운드: 코드로 만든 분위기음 + 효과음 ===== */
@@ -1490,6 +1572,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   who.classList.remove("torn", "ripping");
   $("#pgrid").classList.remove("on");
   document.querySelectorAll(".snote").forEach(n => { n.getAnimations().forEach(a => a.cancel()); n.classList.remove("in", "gone", "falling"); n.style.opacity = ""; });
+  if (window.__mapReset) window.__mapReset();
   document.querySelectorAll(".nwrap").forEach(w => { w.classList.remove("open"); w.querySelector(".trace").setAttribute("aria-expanded", "false"); });
   document.querySelectorAll(".gcard").forEach(c => { c.setAttribute("aria-pressed", "false"); const s = c.querySelector(".stampy"); s && s.classList.remove("shown"); });
   seal.classList.remove("on"); seal.style.opacity = ""; seal.style.transform = ""; card.classList.remove("hit");
@@ -1687,6 +1770,198 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   w.classList.add("open"); tr.setAttribute("aria-expanded", "true");
   void n.offsetWidth; n.classList.add("in"); rustle();
  }));
+
+ /* ===== 출몰 지도 ===== */
+ {
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, at, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); parent && parent.appendChild(e); return e; };
+  // 세계 지도: 5도 간격 픽셀 (72×27), 대륙을 직사각형 조각으로 근사
+  const land = [
+   // 북미
+   [1,3,2,7],[0,4,7,16],[0,1,16,24],[2,4,21,24],[4,4,16,22],[5,9,11,22],[5,6,22,23],[9,9,19,20],[8,10,12,17],[11,11,15,18],[12,13,18,20],
+   // 그린란드
+   [0,2,25,32],
+   // 남미
+   [12,12,20,24],[13,15,19,29],[16,18,20,29],[19,20,21,28],[21,21,22,26],[22,22,22,25],[23,24,22,24],[25,25,22,23],
+   // 유럽
+   [3,4,34,35],[0,3,37,42],[4,6,35,44],[6,7,34,36],[7,7,38,39],[6,7,40,44],
+   // 아시아
+   [0,4,42,71],[5,7,44,64],[8,8,44,61],[9,11,43,47],[8,11,49,53],[12,12,50,52],[9,12,55,57],[9,9,58,60],[7,7,61,61],[6,8,62,64],[3,4,67,68],[11,13,60,60],[14,16,55,58],[15,15,60,64],[16,16,59,63],
+   // 아프리카
+   [7,7,35,41],[8,10,33,46],[11,12,33,46],[13,13,34,46],[14,14,38,45],[15,16,38,44],[17,18,38,43],[17,19,45,46],[19,20,39,42],[21,21,39,41],
+   // 오세아니아
+   [17,17,62,63],[18,18,59,66],[19,20,58,66],[21,21,59,65],[22,22,64,65],[21,23,69,70]
+  ];
+  const W = 72, H = 27, isLand = Array.from({length: H}, () => new Uint8Array(W));
+  land.forEach(([r0, r1, c0, c1]) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (r < H && c < W) isLand[r][c] = 1; });
+  const wSvg = $("#wSvg"), wBub = $("#wBub");
+  const g0 = el("g", {}, wSvg);
+  for (let r = 0; r < H; r++) for (let c = 0; c < W; c++){
+   el("rect", { x: c + .18, y: r + .18, width: .64, height: .64, fill: isLand[r][c] ? "#d8d8d8" : "#151515" }, g0);
+  }
+  // 위경도 → 칸
+  const P = (lon, lat) => [(lon + 180) / 5, (75 - lat) / 5];
+  const months = ["2072.03","2072.04","2072.05","2072.06","2072.07","2072.08","2072.09","2072.10","2072.11","2072.12","2073.01","2073.02","2073.03"];
+  // [이름, 경도, 위도, 첫 발견 월 인덱스, 누적 건수, 최고 등급, 메모]
+  const spots = [
+   ["미국 ■■■■주", -100, 39, 0, 412, "상급", "최초 발견 지점. 첫 발견자 3개월 뒤 사망.", "first"],
+   ["캐나다 동부", -79, 45, 3, 88, "중급", "국경 인근 산림 지대에서 다수 목격."],
+   ["멕시코 중부", -99, 20, 4, 131, "중급", "도심 공원 화단에서 하급 개체 군집."],
+   ["영국 남부", -1, 52, 6, 64, "중급", "유럽 첫 확인 사례."],
+   ["프랑스 북부", 3, 47, 7, 97, "상급", "상급 개체 1체 확인. 행방 불명."],
+   ["브라질 중부", -48, -15, 8, 156, "중급", "열대 지역에서 곤충형 비율 높음."],
+   ["이집트 북부", 31, 30, 9, 42, "하급", "사막 지대, 개체 활동 적음."],
+   ["인도 북부", 78, 25, 10, 203, "중급", "인구 밀집 지역 피해 급증."],
+   ["일본 간토", 139, 36, 11, 77, "중급", "사물형 개체 다수 보고."],
+   ["호주 남동부", 147, -33, 12, 39, "하급", "가장 늦게 확인된 대륙."],
+   ["■■시", 127, 37, 10, 318, "상급", "V.I.C.T.I.M 관할 작전 도시.", "hq"]
+  ];
+  const gm = el("g", {}, wSvg);
+  const wPts = spots.map((s, i) => {
+   const [x, y] = P(s[1], s[2]), hq = s[7] === "hq", first = s[7] === "first";
+   const col = s[5] === "상급" || hq || first ? "#e3121b" : "#ffffff";
+   const g = el("g", { class: "mk-pt", tabindex: 0, role: "button", "aria-label": s[0] }, gm);
+   el("circle", { class: "ring", cx: x, cy: y, r: 1, fill: "none", stroke: col, "stroke-width": .25 }, g);
+   el("circle", { class: "core", cx: x, cy: y, r: hq ? .75 : .55, fill: col }, g);
+   if (hq){ el("circle", { cx: x, cy: y, r: 1.25, fill: "none", stroke: "#e3121b", "stroke-width": .22 }, g); }
+   g.addEventListener("click", e => { e.stopPropagation(); showW(i, g); });
+   g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); showW(i, g); } });
+   return g;
+  });
+  function bubAt(bub, box, x, y, vbW, vbH, html){
+   bub.innerHTML = html; bub.hidden = false;
+   bub.style.left = (x / vbW * 100) + "%"; bub.style.top = (y / vbH * 100) + "%";
+   bub.classList.toggle("below", y / vbH < .35);
+   bub.classList.remove("pop"); void bub.offsetWidth; bub.classList.add("pop");
+   if (A.started) sfxBeep(1500, .03, .03);
+  }
+  function showW(i, g){
+   const s = spots[i], [x, y] = P(s[1], s[2]);
+   wPts.forEach(p => p.classList.remove("sel")); g.classList.add("sel");
+   const gc = s[5] === "상급" ? "a" : s[5] === "하급" ? "c" : "";
+   bubAt(wBub, $("#wBox"), x, y, W, H, `<b>${s[0]}</b><span class="gr ${gc}">최고 ${s[5]}</span><span class="st">첫 출몰 ${months[s[3]]} · 누적 ${s[4]}건</span><br>${s[6]}${s[7] === "hq" ? '<br><button class="go" id="goCity">▶ 작전 구역 확대</button>' : ""}`);
+   const go = $("#goCity"); if (go) go.addEventListener("click", e => { e.stopPropagation(); toCity(); });
+  }
+  // 날짜 슬라이더 · 확산 재생
+  const rng = $("#mRange"), out = $("#mDate");
+  function applyDate(){
+   const v = +rng.value; out.textContent = months[v];
+   let n = 0, cnt = 0;
+   spots.forEach((s, i) => { const on = s[3] <= v; wPts[i].classList.toggle("off", !on); if (on){ n++; cnt += s[4]; } });
+   $("#wCount").textContent = `■ ${months[v]} 기준 · 확인 지역 ${n}곳 · 누적 출몰 ${cnt.toLocaleString()}건 (예시 기록)`;
+   if (wPts.some((p, i) => p.classList.contains("sel") && p.classList.contains("off"))) wBub.hidden = true;
+  }
+  rng.addEventListener("input", applyDate); applyDate();
+  let playT = 0;
+  $("#mPlay").addEventListener("click", () => {
+   clearInterval(playT); wBub.hidden = true; rng.value = 0; applyDate();
+   playT = setInterval(() => { if (+rng.value >= 12){ clearInterval(playT); return; } rng.value = +rng.value + 1; applyDate(); if (A.started) tick(1800); }, 480);
+  });
+
+  // 도시 작전 구역 (40×26)
+  const cSvg = $("#cSvg"), cBub = $("#cBub"), CW = 40, CH = 26;
+  let seed = 7; const srand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const river = x => Math.round(12 + Math.sin(x / 5) * 1.4);
+  const zones = [
+   { n: "1구역 · 구시가지", x0: 2, y0: 0, x1: 13, y1: 10 },
+   { n: "4구역 · 주거지", x0: 14, y0: 0, x1: 25, y1: 10 },
+   { n: "3구역 · 폐공업단지", x0: 26, y0: 0, x1: 39, y1: 10, mine: 1 },
+   { n: "2구역 · 항만", x0: 2, y0: 15, x1: 9, y1: 25 },
+   { n: "5구역 · 강변", x0: 10, y0: 15, x1: 25, y1: 25, mine: 1 },
+   { n: "6구역 · 출입 통제", x0: 26, y0: 15, x1: 39, y1: 25, lock: 1 }
+  ];
+  const gb = el("g", {}, cSvg);
+  el("rect", { x: 0, y: 0, width: CW, height: CH, fill: "#0b0b0b" }, gb);
+  el("rect", { x: 0, y: 0, width: 2, height: CH, fill: "#1b1b1b" }, gb); // 바다
+  for (let c = 0; c < CW; c++){ const ry = river(c); el("rect", { x: c, y: ry, width: 1, height: 2, fill: "#1b1b1b" }, gb); }
+  // 다리
+  [8, 20, 31].forEach(x => el("rect", { x, y: river(x) - .2, width: 1, height: 2.4, fill: "#3a3a3a" }, gb));
+  // 건물
+  zones.forEach(z => {
+   for (let y = z.y0; y <= z.y1; y++) for (let x = z.x0; x <= z.x1; x++){
+    const ry = river(x); if (y >= ry - 1 && y <= ry + 2) continue;
+    if (x % 6 === 1 || y % 5 === 2) continue; // 도로
+    if (srand() < (z.lock ? .45 : .72)){
+     const v = z.lock ? 40 + srand() * 25 | 0 : 55 + srand() * 70 | 0;
+     el("rect", { x: x + .1, y: y + .1, width: .8, height: .8, fill: `rgb(${v},${v},${v})` }, gb);
+    }
+   }
+  });
+  // 출입 통제 빗금
+  const pat = el("pattern", { id: "hatch", width: 1.2, height: 1.2, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, el("defs", {}, cSvg));
+  el("rect", { width: .35, height: 1.2, fill: "rgba(227,18,27,.35)" }, pat);
+  zones.forEach(z => {
+   const rx = z.x0, ry0 = z.y0, w = z.x1 - z.x0 + 1, h = z.y1 - z.y0 + 1;
+   if (z.lock) el("rect", { x: rx, y: ry0, width: w, height: h, fill: "url(#hatch)" }, gb);
+   if (z.mine) el("rect", { x: rx + .15, y: ry0 + .15, width: w - .3, height: h - .3, fill: "none", stroke: "#e3121b", "stroke-width": .18, "stroke-dasharray": ".6 .4" }, gb);
+   const t = el("text", { x: rx + .6, y: ry0 + (ry0 > 12 ? 1.2 : 1.2), "font-size": .85, fill: z.lock ? "#e3121b" : z.mine ? "#ff8a8f" : "#bbbbbb", "font-weight": 700, "font-family": "Nanum Gothic Coding, monospace" }, gb);
+   t.textContent = z.n;
+   const tb = t; // 배경
+  });
+  // 지부
+  const hq = el("g", {}, cSvg);
+  el("rect", { x: 21.1, y: 6.1, width: 1.8, height: 1.8, fill: "#fff" }, hq);
+  el("rect", { x: 21.6, y: 6.6, width: .8, height: .8, fill: "#e3121b" }, hq);
+  const ht = el("text", { x: 23.2, y: 7.4, "font-size": .75, fill: "#fff", "font-family": "Nanum Gothic Coding, monospace" }, hq); ht.textContent = "V.I.C.T.I.M 3조 지부";
+  // [x, y, 날짜, 등급, 형태, 상태, 메모]
+  const sights = [
+   [6, 5, "2073.01.28", "중급", "꽃", "사살 완료", "구시가지 첫 출몰."],
+   [30, 4, "2073.02.11", "중급", "꽃", "사살 완료", "폐공장 옥상에서 발견."],
+   [34, 8, "2073.03.02", "하급", "곤충", "사살 완료", ""],
+   [15, 18, "2073.03.21", "하급", "꽃", "사살 완료", ""],
+   [18, 4, "2073.04.02", "하급", "꽃", "사살 완료", "놀이터 화단."],
+   [28, 9, "2073.04.19", "중급", "꽃", "도주", "3구역 하수도로 도주."],
+   [37, 2, "2073.05.07", "중급", "사물", "사살 완료", "가로등 형태."],
+   [5, 19, "2073.05.25", "중급", "사물", "도주", "항만 컨테이너 사이."],
+   [20, 22, "2073.06.30", "중급", "꽃", "관찰 중", "지성체 의심. 대화 시도 금지."],
+   [12, 17, "2073.07.14", "하급", "곤충", "사살 완료", ""],
+   [23, 16, "2073.08.03", "상급", "꽃", "추적 중", "3조 A팀 접촉. 피해 보고서 별첨."],
+   [33, 20, "2073.08.17", "상급", "???", "접근 금지", "지성체 H■■■의 거처 (CAM-07)."]
+  ];
+  const gs = el("g", {}, cSvg);
+  const cPts = sights.map((s, i) => {
+   const col = s[3] === "상급" ? "#e3121b" : s[3] === "하급" ? "#8a8a8a" : "#ffffff";
+   const g = el("g", { class: "mk-pt", tabindex: 0, role: "button", "aria-label": `${s[2]} ${s[3]} 출몰` }, gs);
+   if (s[3] === "상급") el("circle", { class: "ring", cx: s[0] + .5, cy: s[1] + .5, r: .9, fill: "none", stroke: col, "stroke-width": .2 }, g);
+   el("rect", { class: "core", x: s[0] + .15, y: s[1] + .15, width: .7, height: .7, fill: col }, g);
+   g.dataset.g = s[3];
+   g.addEventListener("click", e => { e.stopPropagation(); showC(i, g); });
+   g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); showC(i, g); } });
+   return g;
+  });
+  function showC(i, g){
+   const s = sights[i];
+   cPts.forEach(p => p.classList.remove("sel")); g.classList.add("sel");
+   const gc = s[3] === "상급" ? "a" : s[3] === "하급" ? "c" : "";
+   bubAt(cBub, $("#cBox"), s[0] + .5, s[1] + .5, CW, CH, `<b>${s[2]}</b><span class="gr ${gc}">${s[3]}</span><span class="st">${s[4]}형 · ${s[5]}</span>${s[6] ? "<br>" + s[6] : ""}`);
+  }
+  document.querySelectorAll(".gflt .mbtn").forEach(b => b.addEventListener("click", () => {
+   const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on);
+   cPts.forEach(p => { if (p.dataset.g === b.dataset.g) p.classList.toggle("off", !on); });
+   cBub.hidden = true;
+  }));
+  // 세계 → 도시 확대, 도시 → 세계
+  const wStage = $("#mWorld"), cStage = $("#mCity");
+  function toCity(){
+   wBub.hidden = true;
+   const [x, y] = P(127, 37);
+   wSvg.classList.add("zoomout");
+   wSvg.style.transformOrigin = `${x / W * 100}% ${y / H * 100}%`;
+   if (calm.matches){ wStage.hidden = true; cStage.hidden = false; return; }
+   wSvg.style.transform = "scale(9)"; wSvg.style.opacity = ".2";
+   if (A.started) [0, 120, 240].forEach(d => setTimeout(() => sfxBeep(900 + d * 3, .04, .035), d));
+   setTimeout(() => {
+    burst(200, true);
+    wStage.hidden = true; cStage.hidden = false; cStage.classList.remove("flick"); void cStage.offsetWidth; cStage.classList.add("flick");
+    wSvg.style.transform = ""; wSvg.style.opacity = ""; wSvg.classList.remove("zoomout");
+    window.scrollTo(0, 0);
+   }, 820);
+  }
+  function toWorld(){ cBub.hidden = true; cStage.hidden = true; wStage.hidden = false; wStage.classList.remove("flick"); void wStage.offsetWidth; wStage.classList.add("flick"); }
+  $("#mBack").addEventListener("click", toWorld);
+  document.addEventListener("click", e => { if (!e.target.closest(".mbub")){ wBub.hidden = true; cBub.hidden = true; wPts.concat(cPts).forEach(p => p.classList.remove("sel")); } });
+  window.__mapReset = () => { clearInterval(playT); rng.value = 12; applyDate(); toWorld(); wBub.hidden = true; };
+ }
 
  /* 조준점 이동 */
  document.querySelectorAll(".vf .aim").forEach(a => {
