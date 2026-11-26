@@ -1807,14 +1807,14 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    ["미국 ■■■■주", -100, 39, 0, 412, "상급", "최초 발견 지점. 첫 발견자 3개월 뒤 사망.", "first"],
    ["캐나다 동부", -79, 45, 3, 88, "중급", "국경 인근 산림 지대에서 다수 목격."],
    ["멕시코 중부", -99, 20, 4, 131, "중급", "도심 공원 화단에서 하급 개체 군집."],
-   ["영국 남부", -1, 52, 6, 64, "중급", "유럽 첫 확인 사례."],
-   ["프랑스 북부", 3, 47, 7, 97, "상급", "상급 개체 1체 확인. 행방 불명."],
+   ["영국 남부", -3, 54, 6, 64, "중급", "유럽 첫 확인 사례."],
+   ["프랑스 북부", 0, 47, 7, 97, "상급", "상급 개체 1체 확인. 행방 불명."],
    ["브라질 중부", -48, -15, 8, 156, "중급", "열대 지역에서 곤충형 비율 높음."],
    ["이집트 북부", 31, 30, 9, 42, "하급", "사막 지대, 개체 활동 적음."],
    ["인도 북부", 78, 25, 10, 203, "중급", "인구 밀집 지역 피해 급증."],
    ["일본 간토", 139, 36, 11, 77, "중급", "사물형 개체 다수 보고."],
    ["호주 남동부", 147, -33, 12, 39, "하급", "가장 늦게 확인된 대륙."],
-   ["■■시", 127, 37, 10, 318, "상급", "V.I.C.T.I.M 관할 작전 도시.", "hq"]
+   ["■■시 (유럽)", 15, 47, 10, 318, "상급", "V.I.C.T.I.M 관할 작전 도시.", "hq"]
   ];
   const gm = el("g", {}, wSvg);
   const wPts = spots.map((s, i) => {
@@ -1944,7 +1944,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   const wStage = $("#mWorld"), cStage = $("#mCity");
   function toCity(){
    wBub.hidden = true;
-   const [x, y] = P(127, 37);
+   const [x, y] = P(15, 47);
    wSvg.classList.add("zoomout");
    wSvg.style.transformOrigin = `${x / W * 100}% ${y / H * 100}%`;
    if (calm.matches){ wStage.hidden = true; cStage.hidden = false; return; }
