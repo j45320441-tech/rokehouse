@@ -404,7 +404,10 @@ body.v-warn .snd{bottom:58px}
 .snote .mk{background:#151515;color:#151515;border-radius:2px}
 .snote.in{opacity:1;animation:stick .35s cubic-bezier(.3,1.4,.5,1) both}
 @keyframes stick{0%{opacity:0;transform:translateY(-14px) rotate(calc(var(--rot) + 9deg)) scale(1.12)}100%{opacity:1;transform:rotate(var(--rot))}}
+.snote{cursor:pointer;transform-origin:50% 0}
 .snote:hover{transform:rotate(0) translateY(-3px)}
+.snote.gone{visibility:hidden;pointer-events:none}
+.snote.falling{pointer-events:none;z-index:30}
 .snote.reset{animation:none;opacity:0}
 @media(max-width:820px){
  .cards{grid-template-columns:minmax(0,1fr)}
@@ -1461,7 +1464,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   fxIOs.forEach(io => io.disconnect()); fxIOs = [];
   who.classList.remove("torn", "ripping");
   $("#pgrid").classList.remove("on");
-  document.querySelectorAll(".snote").forEach(n => n.classList.remove("in"));
+  document.querySelectorAll(".snote").forEach(n => { n.getAnimations().forEach(a => a.cancel()); n.classList.remove("in", "gone", "falling"); n.style.opacity = ""; });
   document.querySelectorAll(".gcard").forEach(c => { c.setAttribute("aria-pressed", "false"); const s = c.querySelector(".stampy"); s && s.classList.remove("shown"); });
   seal.classList.remove("on"); seal.style.opacity = ""; seal.style.transform = ""; card.classList.remove("hit");
   if (!calm.matches) quotes.forEach(prepQuote);
@@ -1612,9 +1615,43 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   pg.innerHTML = cells.map((k, i) => `<i class="${k === "b" ? "" : k}" style="--d:${(i * 7)}ms"></i>`).join("");
  }
 
+ /* 선배 메모: 누르면 흔들리다 떨어짐 */
+ function rustle(){
+  if (!A.started) return;
+  const c = A.ctx, t0 = c.currentTime, s = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = A.noise; bp.type = "bandpass"; bp.frequency.value = 3200; bp.Q.value = .8;
+  g.gain.setValueAtTime(0, t0);
+  for (let k = 0; k < .5; k += .05) g.gain.setValueAtTime(rnd(.02, .09), t0 + k);
+  g.gain.linearRampToValueAtTime(0, t0 + .6);
+  s.connect(bp).connect(g).connect(A.fx); s.start(t0, Math.random()); s.stop(t0 + .65);
+ }
+ document.querySelectorAll(".snote").forEach(n => n.addEventListener("click", () => {
+  if (n.classList.contains("falling") || n.classList.contains("gone")) return;
+  const rot = parseFloat(getComputedStyle(n).getPropertyValue("--rot")) || 0;
+  if (calm.matches){ n.classList.add("gone"); return; }
+  n.classList.add("falling"); n.classList.remove("in"); n.style.opacity = 1; rustle();
+  const dir = Math.random() < .5 ? -1 : 1, spin = dir * rnd(25, 55), drift = dir * rnd(40, 120);
+  const wob = n.animate([
+   { transform: `rotate(${rot}deg)` },
+   { transform: `rotate(${rot + 9}deg)` },
+   { transform: `rotate(${rot - 8}deg)` },
+   { transform: `rotate(${rot + 6}deg)` },
+   { transform: `rotate(${rot - 4}deg)` },
+   { transform: `rotate(${rot + 2}deg)` }
+  ], { duration: 650, easing: "ease-in-out" });
+  wob.onfinish = () => {
+   const fall = n.animate([
+    { transform: `rotate(${rot + 2}deg)`, opacity: 1 },
+    { transform: `translate(${drift * .4}px, 40px) rotate(${rot + spin * .4}deg)`, opacity: 1, offset: .25 },
+    { transform: `translate(${drift}px, ${innerHeight * .9}px) rotate(${rot + spin}deg)`, opacity: 0 }
+   ], { duration: 1100, easing: "cubic-bezier(.45,0,.9,.55)", fill: "forwards" });
+   fall.onfinish = () => { n.classList.remove("falling"); n.classList.add("gone"); fall.cancel(); n.style.opacity = ""; };
+  };
+ }));
+
  /* 선배 메모: 스크롤해서 보이면 붙음 */
  setInterval(() => {
-  document.querySelectorAll(".snote:not(.in)").forEach(n => {
+  document.querySelectorAll(".snote:not(.in):not(.gone):not(.falling)").forEach(n => {
    if (n.getClientRects().length === 0) return;
    const r = n.getBoundingClientRect();
    if (r.top < innerHeight * .82 && r.bottom > 0){ n.classList.add("in"); if (A.started) tick(rnd(900, 1300)); }
