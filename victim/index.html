@@ -512,6 +512,15 @@ body.v-warn .snd{bottom:58px}
 .cimg{user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .cimg.weak img{animation:weakhit .45s steps(5)}
 @keyframes weakhit{0%{transform:translate(-8px,2px);filter:grayscale(1) contrast(3) brightness(1.4)}25%{transform:translate(7px,-3px);filter:invert(1) contrast(2)}50%{transform:translate(-4px,1px);filter:sepia(1) saturate(8) hue-rotate(-50deg) contrast(2)}75%{transform:translate(3px,0);filter:grayscale(1) contrast(2.5)}100%{transform:none}}
+.myf .fold::after{background:linear-gradient(#2a2a2a,#1c1c1c);box-shadow:inset 0 6px 0 #333,0 0 0 2px #fff}
+.myf .fold::before{background:#2a2a2a}
+.myf .ztag{position:absolute;z-index:2;left:50%;top:38%;transform:translateX(-50%);font-size:clamp(18px,2.4vw,26px);color:#fff;border:2px solid var(--red);padding:2px 12px;letter-spacing:.06em}
+.myf:hover .ztag{background:var(--red)}
+.xlink{position:fixed;inset:0;z-index:75;display:grid;place-items:center;background:rgba(0,0,0,.85)}
+.xlink .box{border:3px solid #fff;background:#000;padding:22px 26px;width:min(380px,88vw);text-align:center}
+.xlink .px{color:var(--red);font-size:14px}
+.xlink p{margin:10px 0 0;font-size:14px;color:#ccc}
+.xlink .osbar{margin:16px auto 6px}
 @media(max-width:820px){
  .cards{grid-template-columns:minmax(0,1fr)}
  .gcard{height:190px}
@@ -589,6 +598,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    <a class="folder" href="#characters"><div class="fold"></div><b>캐릭터</b><small>3조 A팀</small></a>
    <a class="folder" href="#map"><div class="fold"></div><svg class="fpin" viewBox="0 0 12 16" aria-hidden="true"><path d="M3 0h6v1h1v1h1v5h-1v2H9v2H8v2H7v2H5v-2H4v-2H3V9H2V7H1V2h1V1h1zM5 3v3h2V3z"/></svg><b>출몰 지도</b><small>WORLD · ■■시</small></a>
    <a class="folder" href="#classified"><div class="fold"></div><div class="tape" aria-hidden="true"></div><span class="stamp-r" style="right:6%;top:8%;font-size:16px">열람 제한</span><b>기밀문서</b><small>열람 제한</small></a>
+   <a class="folder myf" id="myFile" href="#files" target="_blank" rel="noopener"><div class="fold"></div><span class="ztag px">zeta</span><b>내 파일</b><small>외부 연결 · 플롯</small></a>
    <a class="folder" href="#webtoon"><div class="fold"></div><b>웹툰</b><small>준비 중</small></a>
   </div>
   <div class="foot"><span>열람 기록이 남습니다. · <a href="#title" style="color:inherit">▶ 타이틀 화면</a></span><span class="px">V.I.C.T.I.M / EST. 2073</span></div>
@@ -2093,6 +2103,25 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   $("#mBack").addEventListener("click", toWorld);
   document.addEventListener("click", e => { if (!e.target.closest(".mbub")){ wBub.hidden = true; cBub.hidden = true; wPts.concat(cPts).forEach(p => p.classList.remove("sel")); } });
   window.__mapReset = () => { clearInterval(playT); rng.value = 12; applyDate(); toWorld(); wBub.hidden = true; };
+ }
+
+ /* 내 파일 → zeta 플롯 연결 */
+ const ZETA_URL = ""; // 예: https://zeta-ai.io/ko/plots/....../profile
+ {
+  const a = $("#myFile");
+  if (ZETA_URL) a.href = ZETA_URL;
+  a.addEventListener("click", e => {
+   const ov = document.createElement("div"); ov.className = "xlink";
+   ov.innerHTML = ZETA_URL
+    ? '<div class="box"><span class="px">EXTERNAL LINK</span><div class="osbar"><i style="width:100%;transition:width .9s steps(8)"></i></div><p>외부 서버(zeta)로 연결합니다…</p></div>'
+    : '<div class="box"><span class="px">LINK NOT SET</span><p>연결할 플롯 주소가 아직 등록되지 않았습니다.</p><p style="margin-top:14px"><button class="mbtn">확인</button></p></div>';
+   if (!ZETA_URL) e.preventDefault();
+   document.body.appendChild(ov);
+   burst(160, true); if (A.started) sfxBeep(1200, .05, .035);
+   const close = () => ov.remove();
+   ov.addEventListener("click", close);
+   if (ZETA_URL) setTimeout(close, 1400);
+  });
  }
 
  /* 조준점 이동 */
