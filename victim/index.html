@@ -614,7 +614,7 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
    <a class="folder" href="#map"><div class="fold"></div><svg class="fpin" viewBox="0 0 12 16" aria-hidden="true"><path d="M3 0h6v1h1v1h1v5h-1v2H9v2H8v2H7v2H5v-2H4v-2H3V9H2V7H1V2h1V1h1zM5 3v3h2V3z"/></svg><b>출몰 지도</b><small>WORLD · ■■시</small></a>
    <a class="folder" href="#classified"><div class="fold"></div><div class="tape" aria-hidden="true"></div><span class="stamp-r" style="right:6%;top:8%;font-size:16px">열람 제한</span><b>기밀문서</b><small>열람 제한</small></a>
    <a class="folder myf" id="myFile" href="#files" target="_blank" rel="noopener"><div class="fold"></div><b>내 파일</b><small>시작하기</small></a>
-   <a class="folder" href="#webtoon"><div class="fold"></div><b>웹툰</b><small>EP.01</small></a>
+   <a class="folder" href="#webtoon"><div class="fold"></div><b>웹툰</b><small>기록 영상화 자료</small></a>
   </div>
   <div class="foot"><span>열람 기록이 남습니다. · <a href="#title" style="color:inherit">▶ 타이틀 화면</a></span><span class="px">V.I.C.T.I.M / EST. 2073</span></div>
  </div>
@@ -906,9 +906,9 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
   </div>
   </div>
   <div id="reader" hidden>
-   <div class="rbar"><b class="px" id="rTitle">EP.01</b><span class="rprog" aria-hidden="true"><i id="rProg"></i></span></div>
+   <div class="rbar"><b class="px" id="rTitle" hidden></b><span class="rprog" aria-hidden="true"><i id="rProg"></i></span></div>
    <div class="rpages" id="rPages"></div>
-   <div class="rend"><p class="px">EP.01 END</p><p>다음 화는 준비 중입니다.</p><button class="mbtn" id="rTop">▲ 맨 위로</button></div>
+   <div class="rend"><p class="px">END</p><p>다음 화는 준비 중입니다.</p><button class="mbtn" id="rTop">▲ 맨 위로</button></div>
   </div>
   <div class="foot"><a href="#files" style="color:inherit">← 내부 문서로</a><span class="px">VT-RC</span></div>
  </div>
@@ -2152,8 +2152,6 @@ body.gl .view.on,body.gl .top{transform:translateX(var(--gx,0));filter:contrast(
  const EPISODES = { 1: { t: "EP.01", pages: ["webtoon/ep01_1.jpg", "webtoon/ep01_2.jpg"] } };
  function openEp(n){
   const ep = EPISODES[n]; if (!ep){ closeEp(); return; }
-  $("#rTitle").textContent = ep.t;
-  $(".rend .px").textContent = ep.t + " END";
   $("#rPages").innerHTML = ep.pages.map((src, i) => `<img src="${src}" alt="${ep.t} ${i + 1}" ${i ? 'loading="lazy"' : ""}>`).join("");
   $("#epList").hidden = true; $("#reader").hidden = false;
   window.scrollTo(0, 0); $("#rProg").style.width = "0";
